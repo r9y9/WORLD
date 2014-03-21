@@ -656,13 +656,13 @@ int GetSamplesForDIO(int fs, int x_length, double frame_period) {
     (frame_period / 1000.0)) + 1;
 }
 
-void Dio(double *x, int x_length, int fs, const DioOption option,
+void Dio2(double *x, int x_length, int fs, const DioOption option,
     double *time_axis, double *f0) {
   OriginalDio(x, x_length, fs, option.frame_period, option.f0_floor,
       option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);
 }
 
-void Dio2(double *x, int x_length, int fs, double frame_period,
+void Dio(double *x, int x_length, int fs, double frame_period,
     double *time_axis, double *f0) {
   const double kTargetFs = 4000.0;
   const double kF0Floor = 80.0;
