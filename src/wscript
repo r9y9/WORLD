@@ -1,0 +1,11 @@
+def configure(conf):
+    pass
+
+def build(bld):
+    bld.install_files('${HPREFIX}', bld.path.ant_glob('*.h'))
+
+    bld.shlib(
+        source = bld.path.ant_glob('*.cpp'),
+        target = bld.env['APPNAME'],
+        vnum = bld.env['VERSION'],
+        includes = ['.'])

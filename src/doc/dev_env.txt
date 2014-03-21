@@ -1,0 +1,7 @@
+OS 	: Windows 7 64 bit
+CPU 	: Core i7-2640M 2.8 GHz
+RAM 	: 16 GB
+
+Software
+Visual Studio 2010 Version 10.0.30319.1 RTMRel (Version 0.1.1)
+
