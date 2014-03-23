@@ -14,10 +14,12 @@
 #include "./matlabfunctions.h"
 
 #include <stdio.h>
+#if (defined (__WIN32__) || defined (_WIN32)) && !defined (__MINGW32__)
 #pragma warning(disable : 4996)
 #include <conio.h>
 #include <windows.h>
 #pragma comment(lib, "winmm.lib")
+#endif
 
 namespace {
 
