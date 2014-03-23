@@ -1,12 +1,8 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 #ifndef WORLD_COMMON_H_
 #define WORLD_COMMON_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "./fft.h"
 
@@ -51,6 +47,23 @@ typedef struct {
 int GetSuitableFFTSize(int sample);
 
 //-----------------------------------------------------------------------------
+// These four functions are simple max() and min() function
+// for "int" and "double" type.
+//-----------------------------------------------------------------------------
+inline int MyMax(int x, int y) {
+  return x > y ? x : y;
+}
+inline double MyMax(double x, double y) {
+  return x > y ? x : y;
+}
+inline int MyMin(int x, int y) {
+  return x < y ? x : y;
+}
+inline double MyMin(double x, double y) {
+  return x < y ? x : y;
+}
+
+//-----------------------------------------------------------------------------
 // These functions are used to speed up the processing.
 // Forward FFT
 void InitializeForwardRealFFT(int fft_size, ForwardRealFFT *forward_real_fft);
@@ -65,9 +78,5 @@ void InitializeMinimumPhaseAnalysis(int fft_size,
   MinimumPhaseAnalysis *minimum_phase);
 void GetMinimumPhaseSpectrum(MinimumPhaseAnalysis *minimum_phase);
 void DestroyMinimumPhaseAnalysis(MinimumPhaseAnalysis *minimum_phase);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // WORLD_COMMON_H_

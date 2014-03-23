@@ -1,16 +1,12 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // These functions and variables are defined to use FFT as well as FFTW
 // Please see fft.cpp to show the detailed information
 //-----------------------------------------------------------------------------
 #ifndef WORLD_FFT_H_
 #define WORLD_FFT_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Commands for FFT (This is the same as FFTW)
 #define FFT_FORWARD 1
@@ -41,9 +37,5 @@ fft_plan fft_plan_dft_r2c_1d(int n, double *in, fft_complex *out,
   unsigned int flags);
 void fft_execute(fft_plan p);
 void fft_destroy_plan(fft_plan p);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // WORLD_FFT_H_

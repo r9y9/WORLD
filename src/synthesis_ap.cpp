@@ -1,19 +1,19 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Voice synthesis based on f0, spectrogram and aperiodicity.
 // forward_real_fft, inverse_real_fft and minimum_phase are used to speed up.
 //-----------------------------------------------------------------------------
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <algorithm>
-#include "./synthesis_ap.h"
+
 #include "./common.h"
-#include "./tandem_ap.h"
+#include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-#include "./constant_numbers.h"
+#include "./synthesis_ap.h"
+#include "./tandem_ap.h"
 
 namespace {
 
@@ -60,10 +60,10 @@ void CalculateAperiodicity(double *aperiodicity, int number_of_bands,
     ap[i + 1] = log(aperiodicity[i]);
     axis[i + 1] = cutoff_list[number_of_bands - i - 2];
   }
-  ap[number_of_bands]   = log(aperiodicity[number_of_bands - 1]);
+  ap[number_of_bands] = log(aperiodicity[number_of_bands - 1]);
   axis[number_of_bands] = fs / 2.0;
 
-  double stretching_factor = std::max(f0, target_f0) / target_f0;
+  double stretching_factor = MyMax(f0, target_f0) / target_f0;
   for (int i = 0; i <= fft_size / 2; ++i)
     w[i] = static_cast<double>(i * fs) / fft_size;
   interp1(axis, ap, number_of_bands + 1, w, fft_size / 2 + 1, tmp_ap);
@@ -75,7 +75,7 @@ void CalculateAperiodicity(double *aperiodicity, int number_of_bands,
 
   for (int i = 0; i <= fft_size / 2; ++i)
     periodic_spec[i] = 1.0 -
-    std::min(exp(tmp_ap[i] * 2.0), exp(periodic_spec[i] * 2.0));
+    MyMin(exp(tmp_ap[i] * 2.0), exp(periodic_spec[i] * 2.0));
 
   delete[] tmp_ap;
   delete[] cutoff_list;
@@ -210,7 +210,7 @@ void SynthesisFromAperiodicity(double *f0, int f0_length, double **spectrogram,
         &minimum_phase, impulse_response);
 
     for (int i = current_position;
-      i < std::min(current_position + fft_size / 2, y_length - 1); ++i) {
+      i < MyMin(current_position + fft_size / 2, y_length - 1); ++i) {
       y[i] += impulse_response[i - current_position];
     }
 

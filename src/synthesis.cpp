@@ -1,18 +1,18 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Voice synthesis based on f0, spectrogram and spectrogram of
 // excitation signal.
 //-----------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <algorithm>
 #include "./synthesis.h"
-#include "./matlabfunctions.h"
+
+#include <math.h>
+#include <stdlib.h>
+
 #include "./common.h"
-#include "./constant_numbers.h"
+#include "./constantnumbers.h"
+#include "./matlabfunctions.h"
 
 namespace {
 
@@ -82,7 +82,7 @@ void Synthesis(double *f0, int f0_length, double **spectrogram,
         current_frame, &minimum_phase, &inverse_real_fft, impulse_response);
 
     for (int i = current_position;
-        i < std::min(current_position + kFrameLength, y_length - 1); ++i)
+        i < MyMin(current_position + kFrameLength, y_length - 1); ++i)
       y[i] += impulse_response[i - current_position];
 
     // update

@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // common.cpp includes functions used in at least two files.
 // (1) Common functions
@@ -15,12 +15,11 @@
 // because forward FFT and inverse FFT can run in one step.
 //
 //-----------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include "./common.h"
-#include "./constant_numbers.h"
+
+#include <math.h>
+
+#include "./constantnumbers.h"
 
 //-----------------------------------------------------------------------------
 // Fundamental functions
@@ -76,7 +75,7 @@ void InitializeMinimumPhaseAnalysis(int fft_size,
 void GetMinimumPhaseSpectrum(MinimumPhaseAnalysis *minimum_phase) {
   // Mirroring
   for (int i = minimum_phase->fft_size / 2 + 1;
-       i < minimum_phase->fft_size; ++i)
+      i < minimum_phase->fft_size; ++i)
     minimum_phase->log_spectrum[i] =
     minimum_phase->log_spectrum[minimum_phase->fft_size - i];
 
@@ -91,14 +90,14 @@ void GetMinimumPhaseSpectrum(MinimumPhaseAnalysis *minimum_phase) {
   }
   minimum_phase->cepstrum[minimum_phase->fft_size / 2][1] *= -1.0;
   for (int i = minimum_phase->fft_size / 2 + 1;
-       i < minimum_phase->fft_size; ++i) {
+      i < minimum_phase->fft_size; ++i) {
     minimum_phase->cepstrum[i][0] = 0.0;
     minimum_phase->cepstrum[i][1] = 0.0;
   }
   fft_execute(minimum_phase->forward_fft);
 
-  // This FFT library does not keep the aliasing.
   // Since x is complex number, calculation of exp(x) is as following.
+  // Note: This FFT library does not keep the aliasing.
   double tmp;
   for (int i = 0; i <= minimum_phase->fft_size / 2; ++i) {
     tmp = exp(minimum_phase->minimum_phase_spectrum[i][0] /
@@ -119,4 +118,3 @@ void DestroyMinimumPhaseAnalysis(MinimumPhaseAnalysis *minimum_phase) {
   delete[] minimum_phase->log_spectrum;
   delete[] minimum_phase->minimum_phase_spectrum;
 }
-

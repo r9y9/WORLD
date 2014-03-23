@@ -1,19 +1,15 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // F0 estimation based on DIO (Distributed Inline-filter Operation).
-// Please see styleguide.txt to show special rules on names of variables
-// and fnctions.
 //-----------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <algorithm>
 #include "./dio.h"
+
+#include <math.h>
+
+#include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-#include "./constant_numbers.h"
 
 //-----------------------------------------------------------------------------
 // struct for RawEventByDio()
@@ -40,7 +36,6 @@ namespace {
 // GetDownsampledSignal() calculates the spectrum for estimation.
 // This function carries out downsampling to speed up the estimation process
 // and calculates the spectrum of the downsampled signal.
-// This function is only used in the OrigianlDio().
 //-----------------------------------------------------------------------------
 void GetSpectrumForEstimation(double *x, int x_length, int fs, int y_length,
     int fft_size, int decimation_ratio, fft_complex *y_spectrum) {
@@ -71,7 +66,6 @@ void GetSpectrumForEstimation(double *x, int x_length, int fs, int y_length,
 //-----------------------------------------------------------------------------
 // GetBestF0Contour() calculates the best f0 contour based on stabilities of
 // all candidates. The F0 whose stability is minimum is selected.
-// This function is only used in the OrigianlDio().
 //-----------------------------------------------------------------------------
 void GetBestF0Contour(int f0_length, double **f0_candidate_map,
     double **f0_stability_map, int number_of_bands, double *best_f0_contour) {
@@ -91,7 +85,6 @@ void GetBestF0Contour(int f0_length, double **f0_candidate_map,
 //-----------------------------------------------------------------------------
 // EliminateUnnaturalChange() is the 1st step of the postprocessing.
 // This function eliminates the unnatural change of f0 based on allowed_range.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void EliminateUnnaturalChange(double *f0_before, int f0_length,
     int voice_range_minimum, double allowed_range, double *best_f0_contour,
@@ -114,7 +107,6 @@ void EliminateUnnaturalChange(double *f0_before, int f0_length,
 //-----------------------------------------------------------------------------
 // EliminateSuspectedF0() is the 2nd step of the postprocessing.
 // This function eliminates the suspected f0 in the anlaut and auslaut.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void EliminateSuspectedF0(double *f0_before, int f0_length,
     int voice_range_minimum, double *f0_after) {
@@ -132,7 +124,6 @@ void EliminateSuspectedF0(double *f0_before, int f0_length,
 
 //-----------------------------------------------------------------------------
 // CountNumberOfVoicedSections() counts the number of voiced sections.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void CountNumberOfVoicedSections(double *f0_after, int f0_length,
     int *positive_index, int *negative_index, int *positive_count,
@@ -151,27 +142,26 @@ void CountNumberOfVoicedSections(double *f0_after, int f0_length,
 //-----------------------------------------------------------------------------
 // CorrectOneF0() corrects the f0[current_index] based on
 // f0[current_index + sign].
-// This function is only used in ForwardCorrection() and BackwardCorrection().
 //-----------------------------------------------------------------------------
 bool CorrectOneF0(double **f0_map, int number_of_candidates,
     double allowed_range, int current_index, int sign, double *f0_after) {
   double reference_value1 = f0_after[current_index] * 2 -
     f0_after[current_index + sign];
   double reference_value2 = f0_after[current_index];
-  double minimum_error = std::min(fabs(reference_value1 -
+  double minimum_error = MyMin(fabs(reference_value1 -
     f0_map[0][current_index + sign]),
     fabs(reference_value2 - f0_map[0][current_index + sign]));
   double error_value;
   for (int i = 1; i < number_of_candidates; ++i) {
     error_value =
-      std::min(fabs(reference_value1 - f0_map[i][current_index + sign]),
+      MyMin(fabs(reference_value1 - f0_map[i][current_index + sign]),
           fabs(reference_value2 - f0_map[i][current_index + sign]));
     if (error_value < minimum_error) {
       minimum_error = error_value;
       f0_after[current_index + sign] = f0_map[i][current_index + sign];
     }
   }
-  if (std::min(minimum_error / (reference_value1 + world::kMySafeGuardMinimum),
+  if (MyMin(minimum_error / (reference_value1 + world::kMySafeGuardMinimum),
       minimum_error / (reference_value2 + world::kMySafeGuardMinimum)) >
       allowed_range) {
     f0_after[current_index + sign] = 0.0;
@@ -183,7 +173,6 @@ bool CorrectOneF0(double **f0_map, int number_of_candidates,
 //-----------------------------------------------------------------------------
 // ForwardCorrection() is the 4th step of the postprocessing.
 // This function corrects the f0 candidates from backward to forward.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void ForwardCorrection(double *f0_before, int f0_length, double **f0_map,
     int number_of_candidates, double allowed_range, int *positive_index,
@@ -193,7 +182,7 @@ void ForwardCorrection(double *f0_before, int f0_length, double **f0_map,
   for (int i = 0; i < negative_count; ++i) {
     for (int j = negative_index[i]; j < f0_length - 1; ++j) {
       if (false == CorrectOneF0(f0_map, number_of_candidates, allowed_range,
-        j, 1, f0_after)) break;
+                                j, 1, f0_after)) break;
       if (i != negative_count && j == positive_index[i + 1] - 1) {
         negative_index[j] = j;
         break;
@@ -205,7 +194,6 @@ void ForwardCorrection(double *f0_before, int f0_length, double **f0_map,
 //-----------------------------------------------------------------------------
 // BackwardCorrection() is the 5th step of the postprocessing.
 // This function corrects the f0 candidates from forward to backward.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void BackwardCorrection(double *f0_before, int f0_length, double **f0_map,
     int number_of_candidates, double allowed_range, int *positive_index,
@@ -215,7 +203,7 @@ void BackwardCorrection(double *f0_before, int f0_length, double **f0_map,
   for (int i = positive_count - 1; i >= 0; --i) {
     for (int j = positive_index[i] + 1; j > 1; --j) {
       if (false == CorrectOneF0(f0_map, number_of_candidates, allowed_range,
-        j, -1, f0_after)) break;
+                                j, -1, f0_after)) break;
       if (i != 0 && j == negative_index[i - 1] + 1) {
         positive_index[j] = j;
         break;
@@ -228,7 +216,6 @@ void BackwardCorrection(double *f0_before, int f0_length, double **f0_map,
 // EliminateInvalidVoicedSection() is the final step of the postprocessing.
 // This function eliminates the voiced section whose the
 // duration is under 50 msec.
-// This function is only used in GetFinalF0Contour().
 //-----------------------------------------------------------------------------
 void EliminateInvalidVoicedSection(double *f0_before, int f0_length,
     int voice_range_minimum, double *f0_after) {
@@ -251,7 +238,6 @@ void EliminateInvalidVoicedSection(double *f0_before, int f0_length,
 //-----------------------------------------------------------------------------
 // GetFinalF0Contour() calculates the optimal f0 contour based on all f0
 // candidates. This is the processing after GetBestF0Contour().
-// This function is only used in OriginalDio().
 //-----------------------------------------------------------------------------
 void GetFinalF0Contour(double frame_period, int number_of_candidates, int fs,
     double **f0_map, double *best_f0_contour, int f0_length,
@@ -260,7 +246,7 @@ void GetFinalF0Contour(double frame_period, int number_of_candidates, int fs,
   // First and lat 50 msec are not used as the voiced section.
   int voice_range_minimum = static_cast<int>(0.5 + 50.0 / frame_period);
   // memo:
-  // This is the tentative value.
+  // This is the tentative value. Optimization should be required.
   double allowed_range = 0.1 * frame_period / 5.0;
 
   double *f0_tmp1 = new double[f0_length];
@@ -367,7 +353,6 @@ inline int CheckEvent(int x) {
 //-----------------------------------------------------------------------------
 // ZeroCrossingEngine() calculates the zero crossing points from positive to
 // negative. Thanks to Custom.Maid http://custom-made.seesaa.net/ (2012/8/19)
-// This function is only used in RawEventByDio().
 //-----------------------------------------------------------------------------
 int ZeroCrossingEngine(double *x, int x_length, double fs,
     double *interval_locations, double *intervals) {
@@ -414,15 +399,16 @@ int ZeroCrossingEngine(double *x, int x_length, double fs,
 //-----------------------------------------------------------------------------
 void GetFourZeroCrossingIntervals(double *filtered_signal, int x_length,
     double fs, ZeroCrossings *zero_crossings) {
-  const int kMiximumNumber = x_length / 4;
-  zero_crossings->negative_interval_locations = new double[kMiximumNumber];
-  zero_crossings->positive_interval_locations = new double[kMiximumNumber];
-  zero_crossings->peak_interval_locations = new double[kMiximumNumber];
-  zero_crossings->dip_interval_locations = new double[kMiximumNumber];
-  zero_crossings->negative_intervals = new double[kMiximumNumber];
-  zero_crossings->positive_intervals = new double[kMiximumNumber];
-  zero_crossings->peak_intervals = new double[kMiximumNumber];
-  zero_crossings->dip_intervals = new double[kMiximumNumber];
+  // x_length / 4 (old version) is fixed at 2013/07/14
+  const int kMaximumNumber = x_length;
+  zero_crossings->negative_interval_locations = new double[kMaximumNumber];
+  zero_crossings->positive_interval_locations = new double[kMaximumNumber];
+  zero_crossings->peak_interval_locations = new double[kMaximumNumber];
+  zero_crossings->dip_interval_locations = new double[kMaximumNumber];
+  zero_crossings->negative_intervals = new double[kMaximumNumber];
+  zero_crossings->positive_intervals = new double[kMaximumNumber];
+  zero_crossings->peak_intervals = new double[kMaximumNumber];
+  zero_crossings->dip_intervals = new double[kMaximumNumber];
 
   zero_crossings->number_of_negatives = ZeroCrossingEngine(filtered_signal,
       x_length, fs, zero_crossings->negative_interval_locations,
@@ -458,8 +444,7 @@ void GetF0CandidatesSub(double **interpolated_f0_set, int time_axis_length,
       interpolated_f0_set[1][i] + interpolated_f0_set[2][i] +
       interpolated_f0_set[3][i]) / 4.0;
 
-    f0_deviations[i]   = sqrt((
-      (interpolated_f0_set[0][i] - f0_candidates[i]) *
+    f0_deviations[i] = sqrt(((interpolated_f0_set[0][i] - f0_candidates[i]) *
       (interpolated_f0_set[0][i] - f0_candidates[i]) +
       (interpolated_f0_set[1][i] - f0_candidates[i]) *
       (interpolated_f0_set[1][i] - f0_candidates[i]) +
@@ -535,7 +520,6 @@ void DestroyZeroCrossings(ZeroCrossings *zero_crossings) {
 
 //-----------------------------------------------------------------------------
 // RawEventByDio() calculates the zero-crossings.
-// This function is only used in OriginalDio().
 //-----------------------------------------------------------------------------
 void RawEventByDio(double boundary_f0, double fs, fft_complex *x_spectrum,
     int x_length, int fft_size, double f0_floor, double f0_ceil,
@@ -543,7 +527,7 @@ void RawEventByDio(double boundary_f0, double fs, fft_complex *x_spectrum,
     double *f0_candidates) {
   double *filtered_signal = new double[fft_size];
   GetFilteredSignal(matlab_round(fs / boundary_f0 / 2.0), fft_size, x_spectrum,
-    x_length, filtered_signal);
+      x_length, filtered_signal);
 
   ZeroCrossings zero_crossings = {0};
   GetFourZeroCrossingIntervals(filtered_signal, x_length, fs,
@@ -559,7 +543,6 @@ void RawEventByDio(double boundary_f0, double fs, fft_complex *x_spectrum,
 //-----------------------------------------------------------------------------
 // GetF0CandidateAndStabilityMap() calculates all f0 candidates and
 // their stabilities.
-// This function is only used in the OrigianlDio().
 //-----------------------------------------------------------------------------
 void GetF0CandidateAndStabilityMap(double *boundary_f0_list,
     int number_of_bands, double fs_after_downsampling, int y_length,
@@ -591,10 +574,6 @@ void GetF0CandidateAndStabilityMap(double *boundary_f0_list,
 void OriginalDio(double *x, int x_length, int fs, double frame_period,
     double f0_floor, double f0_ceil, double channels_in_octave, int speed,
     double *time_axis, double *f0) {
-  // Calculation of fundamental parameters
-// Debug 2012/09/09 0.1.2
-//  int number_of_bands = 1 + static_cast<int>(log(f0_ceil / f0_floor)
-//    / world::kLog2 * channels_in_octave);
   int number_of_bands = 2 + static_cast<int>(log(f0_ceil / f0_floor) /
     world::kLog2 * channels_in_octave);
   double * boundary_f0_list = new double[number_of_bands];
@@ -602,10 +581,10 @@ void OriginalDio(double *x, int x_length, int fs, double frame_period,
     boundary_f0_list[i] = f0_floor * pow(2.0, i / channels_in_octave);
 
   // normalization
-  int decimation_ratio = std::max(std::min(speed, 12), 1);
+  int decimation_ratio = MyMax(MyMin(speed, 12), 1);
   int y_length = (1 + static_cast<int>(x_length / decimation_ratio));
   int fft_size = GetSuitableFFTSize(y_length +
-    (4 * static_cast<int>(1.0 + fs / boundary_f0_list[0] / 2.0)));
+      (4 * static_cast<int>(1.0 + fs / boundary_f0_list[0] / 2.0)));
 
   // Calculation of the spectrum used for the f0 estimation
   fft_complex *y_spectrum = new fft_complex[fft_size];
@@ -656,7 +635,7 @@ int GetSamplesForDIO(int fs, int x_length, double frame_period) {
     (frame_period / 1000.0)) + 1;
 }
 
-void Dio2(double *x, int x_length, int fs, const DioOption option,
+void Dio(double *x, int x_length, int fs, const DioOption option,
     double *time_axis, double *f0) {
   OriginalDio(x, x_length, fs, option.frame_period, option.f0_floor,
       option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);

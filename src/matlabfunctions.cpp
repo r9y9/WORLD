@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Matlab functions implemented for WORLD
 // Since these functions are implemented as the same function of Matlab,
@@ -8,17 +8,18 @@
 // and functions).
 // Please see the reference of Matlab to show the usage of functions.
 // Caution:
-//   Since these functions (wavread() and wavwrite())are roughly implemented,
-//   we recomend more suitable functions provided by other organizations.
+//   Since these functions (wavread() and wavwrite()) are roughly implemented,
+//   we recommend more suitable functions provided by other organizations.
 //-----------------------------------------------------------------------------
+#include "./matlabfunctions.h"
+
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <algorithm>
-#include "./matlabfunctions.h"
-#include "./constant_numbers.h"
+
+#include "./constantnumbers.h"
 
 #pragma warning(disable : 4996)
 
@@ -185,7 +186,7 @@ bool GetParameters(FILE *fp, int *fs, int *nbit, int *wav_length) {
   fread(for_int_number, 1, 2, fp);
   *nbit = for_int_number[0];
 
-  // Skip until "data" is found. 2011/3/28
+  // Skip until "data" is found. 2011/03/28
   while (0 != fread(data_check, 1, 1, fp)) {
     if (data_check[0] == 'd') {
       fread(&data_check[1], 1, 3, fp);
@@ -210,6 +211,13 @@ bool GetParameters(FILE *fp, int *fs, int *nbit, int *wav_length) {
 }
 
 }  // namespace
+
+void fftshift(double *x, int x_length, double *y) {
+  for (int i = 0; i < x_length / 2; ++i) {
+    y[i] = x[i + x_length / 2];
+    y[i + x_length / 2] = x[i];
+  }
+}
 
 void histc(double *x, int x_length, double *edges, int edges_length,
     int *index) {
@@ -312,9 +320,10 @@ void interp1Q(double x, double shift, double *y, int x_length, double *xi,
   for (int i = 0; i < xi_length; ++i)
     yi[i] = y[xi_base[i]] + delta_y[xi_base[i]] * xi_fraction[i];
 
-  delete xi_fraction;
-  delete xi_base;
-  delete delta_y;
+  // Bug was fixed at 2013/07/14 by M. Morise
+  delete[] xi_fraction;
+  delete[] xi_base;
+  delete[] delta_y;
 }
 
 double randn(void) {
@@ -444,10 +453,8 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
   fwrite(&short_number, 2, 1, fp);
   short_number = 1;
   fwrite(&short_number, 2, 1, fp);
-//  long_number = static_cast<int16_t>(fs);
   long_number = fs;
   fwrite(&long_number, 4, 1, fp);
-//  long_number = static_cast<int16_t>(fs * 2);
   long_number = fs * 2;
   fwrite(&long_number, 4, 1, fp);
   short_number = 2;
@@ -465,8 +472,8 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
 
   int16_t tmp_signal;
   for (int i = 0; i < x_length; ++i) {
-    tmp_signal = static_cast<int16_t>(std::max(-32768,
-        std::min(32767, static_cast<int>(x[i] * 32767))));
+    tmp_signal = static_cast<int16_t>(MyMax(-32768,
+        MyMin(32767, static_cast<int>(x[i] * 32767))));
     fwrite(&tmp_signal, 2, 1, fp);
   }
 

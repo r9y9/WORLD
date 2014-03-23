@@ -6,12 +6,12 @@
 // This function would be changed in near future.
 //-----------------------------------------------------------------------------
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
+
+#include "./aperiodicity.h"
 
 #include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-#include "./tandem_ap.h"
 
 const double kNormalCutoff = 600.0;
 
@@ -94,9 +94,9 @@ void DestroyInternalParameters(InternalParameters* internal_parameters) {
 }
 
 //-----------------------------------------------------------------------------
-// Get*() calculates each parameter. The names do not followe the style guide.
-// These names are refered by the article. To avoid the confusion,
-// we employed the original names.
+// Get*() calculates each parameter. The names do not follow the style guide.
+// These names are refered by an article that proposes the method.
+// To avoid the confusion, we employed the original names.
 //-----------------------------------------------------------------------------
 void GetH(double *x, int x_length, int segment_length, int index_bias,
     int current_position_in_sample, int t0_in_samples, double **H) {
@@ -138,11 +138,12 @@ void GetR(double **Hw, int n_margin2, int segment_length, double **H,
 }
 
 void GetHwx(double **Hw, int n_margin2, int segment_length, double *x,
-    int origin, double *Hwx) {
+    int x_length, int origin, double *Hwx) {
   double tmp;
   for (int i = 0; i < n_margin2; ++i) {
     tmp = 0.0;
-    for (int j = 0; j < segment_length; ++j) tmp += Hw[i][j]*x[origin+j];
+    for (int j = 0; j < segment_length; ++j)
+      tmp += Hw[i][j]*x[MyMax(0, MyMin(x_length - 1, origin + j))];
     Hwx[i] = tmp;
   }
 }
@@ -178,28 +179,28 @@ void GetW(int segment_length, double **w) {
   w[(segment_length - 1) / 2][(segment_length - 1) / 2] = 1.0;
 }
 
-double GetStdwxHa(double *wsqrt, int segment_length, double *x, int origin,
-    double *Ha, double *wxHa) {
+double GetStdwxHa(double *wsqrt, int segment_length, double *x, int x_length,
+    int origin, double *Ha, double *wxHa) {
   for (int i = 0; i < segment_length; ++i)
-    wxHa[i] = wsqrt[i] * (x[i + origin] - Ha[i]);
+    wxHa[i] = wsqrt[i] *
+    (x[MyMax(0, MyMin(x_length - 1, origin + i))] - Ha[i]);
   return matlab_std(wxHa, segment_length);
 }
 
-double GetStdwx(double *wsqrt, int segment_length, double *x, int origin,
-    double *wx) {
-  for (int i = 0; i < segment_length; ++i) wx[i] = wsqrt[i] * x[i + origin];
+double GetStdwx(double *wsqrt, int segment_length, double *x, int x_length,
+    int origin, double *wx) {
+  for (int i = 0; i < segment_length; ++i)
+    wx[i] = wsqrt[i] * x[MyMax(0, MyMin(x_length - 1, origin + i))];
   return matlab_std(wx, segment_length);
 }
 
 //-----------------------------------------------------------------------------
-// f0PredictionResidualFixSegmentW() calculates the aperiodicity in a frequency
+// f0PredictionResidualFixSegmentW() estimates the aperiodicity in a frequency
 // band.
-// This function is only used in BandwiseAperiodicity().
 //-----------------------------------------------------------------------------
 void f0PredictionResidualFixSegmentW(double *x, int x_length, double fs,
-    double target_f0, double *temporalPositions, double *vuv, int f0_length,
-    double initial_time, int duration_ms, int current_band,
-    double **aperiodicity) {
+    double *f0, double *temporalPositions, int f0_length, double initial_time,
+    int duration_ms, int current_band, double **aperiodicity) {
   const int kNMargin = 3;
   int segment_length = matlab_round(fs * duration_ms / 2000.0) * 2 + 1;
 
@@ -210,17 +211,17 @@ void f0PredictionResidualFixSegmentW(double *x, int x_length, double fs,
   for (int i = 0; i < segment_length; ++i)
     internal_parameters.wsqrt[i] = sqrt(internal_parameters.w[i][i]);
 
-  int t0_in_samples = matlab_round(fs / target_f0);
-  int index_bias = matlab_round(fs / target_f0 / 2.0);
-
+  int t0_in_samples;
+  int index_bias;
   int current_position_in_sample;
   int origin;
   for (int i = 0; i < f0_length; ++i) {
-    current_position_in_sample =
-      matlab_round(-initial_time + temporalPositions[i] * fs) + 1;
-    if (vuv[i] != 0.0) {
-      origin = MyMax(0, MyMin(x_length - 1,
-        current_position_in_sample - index_bias));
+    if (f0[i] != 0.0) {
+      t0_in_samples = matlab_round(fs / f0[i]);
+      index_bias = matlab_round(fs / f0[i] / 2.0);
+      current_position_in_sample =
+        matlab_round(-initial_time + temporalPositions[i] * fs) + 1;
+      origin = current_position_in_sample - index_bias;
       GetH(x, x_length, segment_length, index_bias,
           current_position_in_sample, t0_in_samples, internal_parameters.H);
       GetHw(internal_parameters.H, segment_length, kNMargin * 2,
@@ -228,18 +229,18 @@ void f0PredictionResidualFixSegmentW(double *x, int x_length, double fs,
       GetR(internal_parameters.Hw, kNMargin * 2, segment_length,
           internal_parameters.H, internal_parameters.R);
       GetHwx(internal_parameters.Hw, kNMargin * 2, segment_length,
-          x, origin, internal_parameters.Hwx);
+          x, x_length, origin, internal_parameters.Hwx);
       inv(internal_parameters.R, kNMargin * 2, internal_parameters.invR);
       Geta(internal_parameters.invR, kNMargin * 2, internal_parameters.Hwx,
           internal_parameters.a);
       GetHa(internal_parameters.H, segment_length, kNMargin * 2,
           internal_parameters.a, internal_parameters.Ha);
       aperiodicity[i][current_band] = GetStdwxHa(internal_parameters.wsqrt,
-          segment_length, x, origin, internal_parameters.Ha,
+          segment_length, x, x_length, origin, internal_parameters.Ha,
           internal_parameters.wxHa) / GetStdwx(internal_parameters.wsqrt,
-          segment_length, x, origin, internal_parameters.wx);
+          segment_length, x, x_length, origin, internal_parameters.wx);
     } else {  // Aperiodicity does not use if the speech is unvoiced.
-      aperiodicity[i][current_band] = 0.0;
+      aperiodicity[i][current_band] = 0.9999999995; // safe guard
     }
   }
   DestroyInternalParameters(&internal_parameters);
@@ -251,7 +252,6 @@ void f0PredictionResidualFixSegmentW(double *x, int x_length, double fs,
 // on it.
 //-----------------------------------------------------------------------------
 void GetQMFpairOfFilters(int fs, double *hHP, double *hLP) {
-  // hHP
   hHP[0]  =  0.00041447996898231424;
   hHP[1]  =  0.00078125051417292477;
   hHP[2]  = -0.0010917236836275842;
@@ -294,7 +294,6 @@ void GetQMFpairOfFilters(int fs, double *hHP, double *hLP) {
   hHP[39] =  0.00078125051417292477;
   hHP[40] =  0.00041447996898231424;
 
-  // hLP
   hLP[0]  = -0.00065488170077483048;
   hLP[1]  =  0.00007561994958159384;
   hLP[2]  =  0.0020408456937895227;
@@ -338,7 +337,6 @@ void GetQMFpairOfFilters(int fs, double *hHP, double *hLP) {
 // GetSignalsForAperiodicity() calculates the signals used to calculate the
 // aperiodicity. low_signal, high_signal and downsampled_high_signal are
 // calculated in this function.
-// This function is only used in BandwiseAperiodicity()
 //-----------------------------------------------------------------------------
 void GetSignalsForAperiodicity(int fft_size, double *whole_signal,
     int filtered_signal_length, double *hHP, double *hLP,
@@ -353,13 +351,18 @@ void GetSignalsForAperiodicity(int fft_size, double *whole_signal,
       fft_size, &forward_real_fft, &inverse_real_fft, low_signal);
   DestroyForwardRealFFT(&forward_real_fft);
   DestroyInverseRealFFT(&inverse_real_fft);
+
+  // Maintain the amplitude
+  for (int i = 0; i < filtered_signal_length; ++i) {
+    low_signal[i] *= fft_size;
+    high_signal[i] *= fft_size;
+  }
   for (int j = 0; j < filtered_signal_length; j += 2)
     downsampled_high_signal[j / 2] = high_signal[j];
 }
 
 //-----------------------------------------------------------------------------
 // UpdateWholeSignal() updates the whole_signal.
-// This function is only used in BandwiseAperiodicity().
 //-----------------------------------------------------------------------------
 inline int UpdateWholeSignal(int filtered_signal_length, int fft_size,
     double *low_signal, double *whole_signal) {
@@ -374,7 +377,7 @@ inline int UpdateWholeSignal(int filtered_signal_length, int fft_size,
 // BandwiseAperiodicity() calculates the aperiodicity in each frequency band.
 //-----------------------------------------------------------------------------
 void BandwiseAperiodicity(double *x, int x_length, int fs, double *f0,
-    double *vuv, int f0_length, double *stretched_locations,
+    int f0_length, double *stretched_locations,
     int window_length_ms, double **aperiodicity) {
   double hHP[41], hLP[37];
   GetQMFpairOfFilters(fs, hHP, hLP);
@@ -399,17 +402,16 @@ void BandwiseAperiodicity(double *x, int x_length, int fs, double *f0,
   for (int i = 0; i < x_length; ++i) whole_signal[i] = x[i];
   for (int i = x_length; i < fft_size; ++i) whole_signal[i] = 0.0;
 
-  double tmp_fs;
+  double tmp_fs = 0.0;
   for (int i = 0; i < number_of_bands - 1; ++i) {
     tmp_fs = cutoff_list[i] * 2.0;
     GetSignalsForAperiodicity(fft_size, whole_signal, filtered_signal_length,
         hHP, hLP, low_signal, high_signal, downsampled_high_signal);
 
     f0PredictionResidualFixSegmentW(downsampled_high_signal,
-        matlab_round(filtered_signal_length / 2.0), tmp_fs, f0[0],
-        stretched_locations, vuv, f0_length, 41.0 / 2.0 / tmp_fs,
+        matlab_round(filtered_signal_length / 2.0), tmp_fs, f0,
+        stretched_locations, f0_length, 41.0 / 2.0 / tmp_fs,
         window_length_ms, number_of_bands - i - 1, aperiodicity);
-
     // subband separation
     filtered_signal_length = UpdateWholeSignal(filtered_signal_length,
         fft_size, low_signal, whole_signal);
@@ -419,8 +421,8 @@ void BandwiseAperiodicity(double *x, int x_length, int fs, double *f0,
 
   filtered_signal_length = (filtered_signal_length - 82) * 2;
   f0PredictionResidualFixSegmentW(whole_signal,
-      matlab_round(filtered_signal_length / 2.0), tmp_fs, f0[0],
-      stretched_locations, vuv, f0_length, 41.0 / 2.0 / tmp_fs,
+      matlab_round(filtered_signal_length / 2.0), tmp_fs, f0,
+      stretched_locations, f0_length, 41.0 / 2.0 / tmp_fs,
       window_length_ms, 0, aperiodicity);
 
   delete[] downsampled_high_signal;
@@ -466,7 +468,6 @@ int GetNormalizedSignal(double *x, int x_length, int fs, double *f0,
     int f0_length, double frame_period, double target_f0,
     double **stretched_signal, double **stretched_locations) {
   int ix_length = x_length * 4 + 6;
-//  int ix_length = x_length * 4;
 
   double *interpolated_x = new double[ix_length];
   GetInterpolatedSignal(x, x_length, interpolated_x);
@@ -483,7 +484,7 @@ int GetNormalizedSignal(double *x, int x_length, int fs, double *f0,
     base_f0[i] = f0[i] == 0.0 ? target_f0 : f0[i];
     base_time_axis[i] = i * frame_period;
   }
-  base_f0[f0_length] = target_f0;
+  base_f0[f0_length] = base_f0[f0_length - 1] * 2 - base_f0[f0_length - 2];
   base_time_axis[f0_length] = f0_length * frame_period;
 
   double *interpolated_f0 = new double[ix_length];
@@ -495,10 +496,11 @@ int GetNormalizedSignal(double *x, int x_length, int fs, double *f0,
   stretched_time_axis[0] = interpolated_f0[0] / tmp;
   for (int i = 1; i < ix_length; ++i)
     stretched_time_axis[i] = stretched_time_axis[i - 1] +
-    (interpolated_f0[i] / tmp);
+      (interpolated_f0[i] / tmp);
 
   int stretched_signal_length =
     static_cast<int>(stretched_time_axis[ix_length - 1] * fs * 4.0) + 1;
+
   double *tmp_time_axis = new double[stretched_signal_length];
   double *stretched_signal4 = new double[stretched_signal_length];
 
@@ -527,41 +529,107 @@ int GetNormalizedSignal(double *x, int x_length, int fs, double *f0,
   return 1 + stretched_signal_length / 4;
 }
 
-}  // namespace
+//-----------------------------------------------------------------------------
+// CalculateAperiodicity() transforms the input aperiodicity in each band
+// into the aperiodicity spectrum whose length is fft_size / 2 + 1.
+//-----------------------------------------------------------------------------
+void CalculateAperiodicity(double *coarse_aperiodicity, int number_of_bands,
+    int fft_size, double stretching_factor, int fs, double *aperiodicity) {
+  if (stretching_factor == 0) {
+    for (int i = 0; i <= fft_size / 2; ++i) aperiodicity[i] = 0.0;
+    return;
+  }
+  // 0 Hz and fs / 2 Hz are added for interporation
+  double *coarse_aperiodicity_expand = new double[number_of_bands + 1];
+  double *coarse_axis = new double[number_of_bands + 1];
+  double *frequency_axis = new double[fft_size / 2 + 1];
+
+  const double kMySafeGuardLogMinimum = -21.416413017506358;
+
+  coarse_aperiodicity_expand[0] = kMySafeGuardLogMinimum;
+  coarse_axis[0] = 0.0;
+  for (int i = 0; i < number_of_bands; ++i) {
+    coarse_aperiodicity_expand[i + 1] = log(coarse_aperiodicity[i]);
+    coarse_axis[i + 1] = fs / pow(2.0, number_of_bands - i) *
+      stretching_factor;
+  }
+
+  for (int i = 0; i <= fft_size / 2; ++i)
+    frequency_axis[i] = static_cast<double>(i * fs) / fft_size;
+
+  interp1(coarse_axis, coarse_aperiodicity_expand, number_of_bands + 1,
+      frequency_axis, fft_size / 2 + 1, aperiodicity);
+
+  for (int i = 0; i <= fft_size / 2; ++i)
+    aperiodicity[i] = exp(aperiodicity[i]);
+
+  delete[] frequency_axis;
+  delete[] coarse_axis;
+  delete[] coarse_aperiodicity_expand;
+}
 
 int GetNumberOfBands(int fs) {
   return static_cast<int>(log(fs / kNormalCutoff) / world::kLog2);
 }
 
-double AperiodicityRatio(double *x, int x_length, int fs, double *f0,
-    int f0_length, double frame_period, double **aperiodicity) {
-  double max_f0 = 0.0;
-  for (int i = 0; i < f0_length; ++i)
-    max_f0 = max_f0 > f0[i] ? max_f0 : f0[i];
+}  // namespace
+
+void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
+    int f0_length, double *time_axis, int fft_size, double **aperiodicity) {
+  double **original_ap = new double *[f0_length];
+  double **normalized_ap = new double *[f0_length];
+  for (int i = 0; i < f0_length; ++i) {
+    original_ap[i] = new double[GetNumberOfBands(fs)];
+    normalized_ap[i] = new double[GetNumberOfBands(fs)];
+  }
 
   const double kMinimumF0ForNormalization = 32.0;
   const double kMaximumF0ForNormalization = 200.0;
-  double target_f0 = MyMax(kMinimumF0ForNormalization,
-      MyMin(kMaximumF0ForNormalization, max_f0));
+  double min_f0 = kMaximumF0ForNormalization;
+  for (int i = 0; i < f0_length; ++i)
+    if (f0[i] < min_f0 && f0[i] > kMinimumF0ForNormalization) min_f0 = f0[i];
 
-  // The number of two arraies are unknown.
+  double target_f0 = MyMax(kMinimumF0ForNormalization,
+      MyMin(kMaximumF0ForNormalization, min_f0));
+
   double *stretched_signal = NULL;
   double *stretched_locations = NULL;
-
   int normalized_signal_length = GetNormalizedSignal(x, x_length, fs, f0,
-      f0_length, frame_period / 1000.0, target_f0, &stretched_signal,
+      f0_length, time_axis[1], target_f0, &stretched_signal,
       &stretched_locations);
 
   double *stretched_f0 = new double[f0_length];
-  for (int i = 0; i < f0_length; ++i) stretched_f0[i] = target_f0;
+  for (int i = 0; i < f0_length; ++i)
+    stretched_f0[i] = f0[i] == 0 ? 0.0 : target_f0;
 
   BandwiseAperiodicity(stretched_signal, normalized_signal_length, fs,
-      stretched_f0, f0, f0_length, stretched_locations,
-      matlab_round(2000.0 / target_f0), aperiodicity);
+      stretched_f0, f0_length, stretched_locations,
+      matlab_round(2000.0 / target_f0), normalized_ap);
 
+  BandwiseAperiodicity(x, x_length, fs, f0, f0_length, time_axis,
+      30, original_ap);
+
+  double *tmp_ap = new double[fft_size / 2 + 1];
+  for (int i = 0; i < f0_length; ++i) {
+    CalculateAperiodicity(normalized_ap[i], GetNumberOfBands(fs),
+        fft_size, MyMax(f0[i], target_f0) / target_f0, fs, aperiodicity[i]);
+    CalculateAperiodicity(original_ap[i], GetNumberOfBands(fs),
+        fft_size, 1.0, fs, tmp_ap);
+    for (int j = 0; j < fft_size / 2 + 1; ++j)
+      aperiodicity[i][j] = MyMin(0.9999999995,
+        MyMax(0.0000000005, MyMin(aperiodicity[i][j], tmp_ap[j])));
+  }
+
+  delete[] tmp_ap;
   delete[] stretched_f0;
   delete[] stretched_signal;
   delete[] stretched_locations;
+  for (int i = 0; i < f0_length; ++i) {
+    delete[] original_ap[i];
+    delete[] normalized_ap[i];
+  }
+  delete[] original_ap;
+  delete[] normalized_ap;
 
-  return target_f0;
+  return;
 }

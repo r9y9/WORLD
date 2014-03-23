@@ -39,7 +39,7 @@ Version 0.1.1				2012/9/2
 　 http://www.textdrop.net/google-styleguide-ja/cppguide.xml
  * プログラム中のコメントを原則英語に．
 
-Version 0.1.2				2012/9/
+Version 0.1.2				2012/9/16
  * dio.cpp, platinum.cppに含まれるバグの修正．
  * 各.cppファイルに対応した.hファイルを作成．
  * matlabfunctions.cppのfftfilt関数を高速化しfftfilt_fastとして実装．
@@ -48,9 +48,16 @@ Version 0.1.2				2012/9/
    http://www.campwoodsw.com/sourcemonitor.html
  * コアAPI部分はOS依存のコードは排除．
 
+Version 0.1.3				2013/7/26
+ * DIOで推定されたF0を瞬時周波数に基づいて補正する関数StoneMask()の実装．
+ * ファイル名の命名規則に対応するためconstant_numbers.hをconstantnumbers.hに修正．
+ * 非周期性指標推定結果の出力をオクターブバンド毎の出力からfft_size / 2 + 1点のスペクトル形状に修正
+ * 非周期性指標の変更に基づき合成関数の修正
+   上記2つの関数はaperiodicity.cpp, synthesisfromaperiodicity.cppとして修正．
+ * その他確認されていたバグの修正．
+
 今後の予定．
 
-Version 0.1.3
-今のところこれといった計画は無し．
-現在研究中の位相推定が完成し次第WORLDに組み込む予定．
+Version 0.1.4
+非周期性指標推定法D4C (Definitive Decomposition Done Dirt Cheap)の実装．
 

@@ -1,13 +1,9 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //-----------------------------------------------------------------------------
 #ifndef WORLD_PLATINUM_H_
 #define WORLD_PLATINUM_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //-----------------------------------------------------------------------------
 // Platinum() calculates the spectrum of the excitation signal.
@@ -28,9 +24,4 @@ extern "C" {
 void Platinum(double *x, int x_length, int fs, double *time_axis, double *f0,
   int f0_length, double **spectrogram, int fft_size,
   double **residual_spectrogram);
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif  // WORLD_PLATINUM_H_

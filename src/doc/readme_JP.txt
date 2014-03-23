@@ -13,13 +13,14 @@ WORLDのメインではありませんが，こちらのほうが都合が良いこともありますので，
 実装しています．
 
 (1) Dio() により音声の基本周波数を推定．
+(1-1) 必要に応じてStoneMask() により基本周波数を補正
 (2) Star() により音声のスペクトル包絡を推定．
 以下はどちらか片方でOK．
 (3-1) Platinum() により音声の励起信号を推定．
-(3-2) AperiodicityRatio_v3() により音声の非周期性指標を計算．
+(3-2) AperiodicityRatio() により音声の非周期性指標を計算．
 (4) 必要に応じて音高や音色の制御
 (5-1) Platinum() を使った場合Synthesis() により音声を合成．
-(5-2) AperiodicityRatio_v3() を使った場合Synthesis_ap() により音声を合成．
+(5-2) AperiodicityRatio() を使った場合SynthesisFromAperiodicity() により音声を合成．
 
 --------------------------------------------------------------------
 お願い：
@@ -29,5 +30,5 @@ WORLDを利用される場合は，商用/非商用に関わらず森勢に
 それらの研究資金は，今後WORLDを発展させるために利用します．
 
 作者へ連絡
-morise [at] fc.ritsumei.ac.jp
+mmorise [at] yamanashi.ac.jp
 Twitter: @m_morise 

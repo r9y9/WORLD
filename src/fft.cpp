@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // This file represents the functions about FFT (Fast Fourier Transform)
 // implemented by Mr. Ooura, and wrapper functions implemented by M. Morise.
@@ -13,10 +13,10 @@
 //   (English) http://www.fftw.org/
 // 2012/08/24 by M. Morise
 //-----------------------------------------------------------------------------
-#include <stdlib.h>
-#include <math.h>
-
 #include "./fft.h"
+
+#include <math.h>
+#include <stdlib.h>
 
 void cdft(int n, int isgn, double *a, int *ip, double *w);
 void rdft(int n, int isgn, double *a, int *ip, double *w);

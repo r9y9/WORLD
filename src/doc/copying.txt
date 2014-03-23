@@ -5,7 +5,7 @@
 /*           http://www.aspl.is.ritsumei.ac.jp/morise/world/         */
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2012  M. Morise                               */
+/*  Copyright (c) 2010-2013  M. Morise                               */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */

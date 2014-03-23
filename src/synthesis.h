@@ -1,13 +1,9 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //-----------------------------------------------------------------------------
 #ifndef WORLD_SYNTHESIS_H_
 #define WORLD_SYNTHESIS_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //-----------------------------------------------------------------------------
 // Synthesis() synthesizes the voice from three parameters.
@@ -26,9 +22,5 @@ extern "C" {
 void Synthesis(double *f0, int f0_length, double **spectrogram,
   double **residual_spectrogram, int fft_size, double frame_period, int fs,
   int y_length, double *y);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // WORLD_SYNTHESIS_H_

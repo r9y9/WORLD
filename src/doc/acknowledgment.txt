@@ -3,7 +3,7 @@ please contact me via e-mail (morise@fc.ritsumei.ac.jp).
 
 Mr. Ying-Chun Liu (PaulLiu): 
 He implemented the WORLD for GNU/Linux.
-WORLD 0.0.4_1 is based on his program.
+WORLD 0.0.4_1 and later are based on his program.
 
 Mr. Takuya Ooura: 
 We used his source code on FFT (Version 0.1.0).

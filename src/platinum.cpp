@@ -1,21 +1,19 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Excitation signal extraction by PLATINUM.
 // Ths excitation signal is calculated as the signal that is the convolution of
 // the spectrum of windowed signal and inverse function of spectral envelop.
-// Please see styleguide.txt to show special rules on names of variables
-// and fnctions.
 //-----------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <algorithm>
 #include "./platinum.h"
+
+#include <math.h>
+#include <stdlib.h>
+
 #include "./common.h"
+#include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-#include "./constant_numbers.h"
 
 namespace {
 
@@ -23,15 +21,15 @@ namespace {
 // GetNearestPulseIndex() calculates the nearest index of pulse_locations.
 // Platinum() calculates the residual spectrum in all frame (frame_period
 // interval), while the pulse_locations are not calculated in all frame.
-// This function is only used GetOneFrameResidualSpec().
 //-----------------------------------------------------------------------------
 int GetNearestPulseIndex(int pulse_count, double current_time,
     int fs, double *pulse_locations) {
   const double kSafeGuradForAmplitude = 100000.0;
   double minimum_value = kSafeGuradForAmplitude;  // safe guard
 
-  int index, minimum_index;
-  double tmp;
+  int index = 0;
+  int minimum_index = 0;
+  double tmp = 0.0;
   for (int i = 0; i < pulse_count; ++i) {
     tmp = fabs(pulse_locations[i] - current_time);
     if (tmp < minimum_value) {
@@ -68,9 +66,9 @@ void GetOneFrameResidualSpec(double *x, int x_length, int fs,
   // Windowing and FFT
   for (int i = 0; i < window_length; ++i)
     forward_real_fft->waveform[i] =
-    x[std::min(x_length - 1, std::max(0, i + index - matlab_round(current_t0)))] *
-    (0.5 - 0.5 * cos(2.0 * world::kPi * (i + 1.0) /
-    (window_length + 1.0)));
+      x[MyMin(x_length - 1, MyMax(0, i + index - matlab_round(current_t0)))] *
+      (0.5 - 0.5 * cos(2.0 * world::kPi * (i + 1.0) /
+      (window_length + 1.0)));
   for (int i = window_length; i < minimum_phase->fft_size; ++i)
     forward_real_fft->waveform[i] = 0.0;
   fft_execute(forward_real_fft->forward_fft);
@@ -100,10 +98,8 @@ void GetOneFrameResidualSpec(double *x, int x_length, int fs,
     minimum_phase->minimum_phase_spectrum[minimum_phase->fft_size / 2][0];
 }
 
-
 //-----------------------------------------------------------------------------
 // GetWedgeInOneSection() is calculates a wedge in one voiced/unvoiced section.
-// This function is only used in GetWedgeList().
 //-----------------------------------------------------------------------------
 int GetWedgeInOneSection(double *x, int x_length, int fs, double *f0,
     double frame_period, int start_index, int end_index) {
@@ -115,10 +111,10 @@ int GetWedgeInOneSection(double *x, int x_length, int fs, double *f0,
 
   int wedge = 0;
   double peak_value = 0.0;
-  double tmp_amplitude;
-  int tmp_index;
+  double tmp_amplitude = 0.0;
+  int tmp_index = 0;
   for (int j = 0; j < t0 * 2 + 1; ++j) {
-    tmp_index = std::max(0, std::min(x_length - 1, center_index - t0 + j));
+    tmp_index = MyMax(0, MyMin(x_length - 1, center_index - t0 + j));
     tmp_amplitude =
       fabs(x[tmp_index]);
     if (tmp_amplitude > peak_value) {
@@ -133,7 +129,6 @@ int GetWedgeInOneSection(double *x, int x_length, int fs, double *f0,
 // GetWedgeList() calculates the suitable peak amplitude of each voiced
 // section. Peak amplitudes are used as "Wedge" to calculate the temporal
 // positions used for windowing.
-// This function is only used in Platinum().
 //-----------------------------------------------------------------------------
 void GetWedgeList(double *x, int x_length, int number_of_voiced_sections,
     int *start_list, int *end_list, int fs, double frame_period, double *f0,
@@ -146,7 +141,6 @@ void GetWedgeList(double *x, int x_length, int number_of_voiced_sections,
 
 //-----------------------------------------------------------------------------
 // GetTemporalBoundaries() calculates the temporal boundaries in VUV.
-// This function is only used in platinum()
 //-----------------------------------------------------------------------------
 void GetTemporalBoundaries(double *f0, int f0_length,
     int number_of_voiced_sections, int *start_list, int *end_list) {
@@ -170,7 +164,6 @@ void GetTemporalBoundaries(double *f0, int f0_length,
 
 //-----------------------------------------------------------------------------
 // GetNumberOfVoicedSections() calculates the number of voiced sections.
-// This function is only used in platinum()
 //-----------------------------------------------------------------------------
 int GetNumberOfVoicedSections(double *f0, int f0_length) {
   int number_of_voiced_sections = 0;
@@ -185,17 +178,16 @@ int GetNumberOfVoicedSections(double *f0, int f0_length) {
 
 //-----------------------------------------------------------------------------
 // GetPulseLocationsInOneSection() calculates the peak locations in one frame.
-// This function is only used in GetPulseLocations().
 //-----------------------------------------------------------------------------
 int GetPulseLocationsInOneSection(int fs, int x_length, int start_index,
     int end_index, double frame_period, int current_wedge,
     double *total_phase, int current_count, double *pulse_locations) {
   start_index =
-    std::max(0, static_cast<int>(fs * start_index * frame_period / 1000.0));
-  end_index = std::min(x_length - 1,
+    MyMax(0, static_cast<int>(fs * start_index * frame_period / 1000.0));
+  end_index = MyMin(x_length - 1,
       matlab_round(fs * (end_index + 1.0) * frame_period / 1000.0) -1);
-  double tmp = total_phase[current_wedge];
 
+  double tmp = total_phase[current_wedge];
   for (int i = start_index; i < end_index; ++i)
     if (fabs(fmod(total_phase[i + 1] - tmp, 2.0 * world::kPi) -
       fmod(total_phase[i] - tmp, 2.0 * world::kPi)) > world::kPi / 2.0)
@@ -208,7 +200,6 @@ int GetPulseLocationsInOneSection(int fs, int x_length, int start_index,
 // Sampling period of f0 time_axis[1] - time_axis[0], while the sampling
 // period of total_phase is 1 / fs. total_phase is used to calculate the
 // temporal positions of glottal pulse.
-// This function is only used in GetPulseLocations().
 //-----------------------------------------------------------------------------
 void GetTotalPhase(double *f0, int f0_length, int x_length, double *time_axis,
     int fs, double *total_phase) {
@@ -237,7 +228,6 @@ void GetTotalPhase(double *f0, int f0_length, int x_length, double *time_axis,
 // GetPulseLocations() calculates the temporal positions (maximum peak index)
 // for windowing. These positions are calculated in each frame.
 // Pulse means "glottal pulse"
-// This function is only used in Platinum().
 //-----------------------------------------------------------------------------
 int GetPulseLocations(double *x, int x_length, int fs, double *f0,
     int f0_length, double *time_axis, double frame_period,
@@ -259,8 +249,8 @@ int GetPulseLocations(double *x, int x_length, int fs, double *f0,
   int pulse_count = 0;
   for (int i = 0; i < number_of_voiced_sections; ++i) {
     pulse_count = GetPulseLocationsInOneSection(fs, x_length, start_list[i],
-      end_list[i], frame_period, wedge_list[i], total_phase, pulse_count,
-      pulse_locations);
+        end_list[i], frame_period, wedge_list[i], total_phase, pulse_count,
+        pulse_locations);
   }
 
   delete[] total_phase;

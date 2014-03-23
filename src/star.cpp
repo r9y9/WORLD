@@ -1,26 +1,29 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Spectral envelope estimation based on STAR (Synchronous Technique and Adroit
 // Restoration).
-// Please see styleguide.txt to show special rules on names of variables
-// and fnctions.
 //-----------------------------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <algorithm>
 #include "./star.h"
+
+#include <math.h>
+#include <stdlib.h>
+
+#include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-#include "./constant_numbers.h"
+
+#include <stdio.h>
+#pragma warning(disable : 4996)
+#include <conio.h>
+#include <windows.h>
+#pragma comment(lib, "winmm.lib")
 
 namespace {
 
 //-----------------------------------------------------------------------------
 // AdroitSmoothing() carries out the spectral smoothing by rectangular window
 // whose length is F0.
-// This function is only used in StarGeneralBody().
 //-----------------------------------------------------------------------------
 void AdroitSmoothing(double current_f0, int fs, int fft_size,
     double *power_spectrum, double *star_spectrum) {
@@ -36,8 +39,6 @@ void AdroitSmoothing(double current_f0, int fs, int fft_size,
       i < fft_size / 2 + boundary * 2 + 1; ++i)
     mirroring_spectrum[i] =
     power_spectrum[fft_size / 2 - (i - (fft_size / 2 + boundary)) - 1];
-
-  int tmp = static_cast<int>(current_f0 * fft_size / fs);
 
   double *mirroring_segment = new double[fft_size * 2];
   mirroring_segment[0] = log(mirroring_spectrum[0]) * fs / fft_size;
@@ -85,13 +86,13 @@ void GetPowerSpectrum(double *x, int x_length, int fs, double current_f0,
   int half_window_length = matlab_round(3.0 * fs / current_f0 / 2.0);
   int *base_index = new int[half_window_length * 2 + 1];
   int *index = new int[half_window_length * 2 + 1];
+//  printf("%f\n", current_f0);
 
   for (int i = -half_window_length; i <= half_window_length; ++i)
     base_index[i + half_window_length] = i;
   for (int i = 0; i <= half_window_length * 2; ++i)
-    index[i] = std::min(x_length, std::max(1,
-    matlab_round(temporal_position * fs + 1 + base_index[i]))) - 1;
-
+    index[i] = MyMin(x_length - 1, MyMax(0,
+        matlab_round(temporal_position * fs + 1 + base_index[i])));
   // Designing of the window function
   double *window  = new double[half_window_length * 2 + 1];
   double average = 0.0;
@@ -103,12 +104,12 @@ void GetPowerSpectrum(double *x, int x_length, int fs, double current_f0,
     average += window[i] * window[i];
   }
   average = sqrt(average);
-  for (int i = 0; i <= half_window_length * 2; ++i)
-    window[i] /= average;
+  for (int i = 0; i <= half_window_length * 2; ++i) window[i] /= average;
 
   // Windowing and FFT
   for (int i = 0; i <= half_window_length * 2; ++i)
-    forward_real_fft->waveform[i] = x[index[i]] * window[i];
+    forward_real_fft->waveform[i] = x[index[i]] * window[i] +
+      randn() * 0.0000000000001;  // safe guard
   for (int i = half_window_length * 2 + 1; i < forward_real_fft->fft_size; ++i)
     forward_real_fft->waveform[i] = 0.0;
   fft_execute(forward_real_fft->forward_fft);
@@ -116,9 +117,9 @@ void GetPowerSpectrum(double *x, int x_length, int fs, double current_f0,
   // Calculation of the power spectrum.
   for (int i = 1; i <= forward_real_fft->fft_size / 2; ++i)
     power_spectrum[i] = forward_real_fft->spectrum[i][0] *
-    forward_real_fft->spectrum[i][0] +
-    forward_real_fft->spectrum[i][1] *
-    forward_real_fft->spectrum[i][1];
+      forward_real_fft->spectrum[i][0] +
+      forward_real_fft->spectrum[i][1] *
+      forward_real_fft->spectrum[i][1];
   power_spectrum[0] = power_spectrum[1];
 
   delete[] window;
@@ -144,19 +145,23 @@ void StarGeneralBody(double *x, int x_length, int fs, double current_f0,
   GetPowerSpectrum(x, x_length, fs, current_f0, temporal_position,
       forward_real_fft, power_spectrum);
 
+  for (int i = 0; i <= forward_real_fft->fft_size / 2; ++i)
+    star_spectrum[i] = power_spectrum[i];
   // Adroit smoothing
   AdroitSmoothing(current_f0, fs, forward_real_fft->fft_size,
       power_spectrum, star_spectrum);
-
   delete[] power_spectrum;
 }
 
 }  // namespace
 
+int GetFFTSizeForStar(int fs) {
+  return static_cast<int>(pow(2.0, 1.0 +
+      static_cast<int>(log(3.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
+}
+
 void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
     int f0_length, double **spectrogram) {
-  double frame_period = (time_axis[1] - time_axis[0]) * 1000.0;
-
   int fft_size = GetFFTSizeForStar(fs);
 
   double *star_spectrum = new double[fft_size];
@@ -176,9 +181,4 @@ void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
 
   DestroyForwardRealFFT(&forward_real_fft);
   delete[] star_spectrum;
-}
-
-int GetFFTSizeForStar(int fs) {
-  return static_cast<int>(pow(2.0, 1.0 +
-    static_cast<int>(log(3.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
 }

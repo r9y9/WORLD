@@ -1,15 +1,24 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012 Masanori Morise. All Rights Reserved.
-// Author: morise [at] fc.ritsumei.ac.jp (Masanori Morise)
+// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //-----------------------------------------------------------------------------
 #ifndef WORLD_MATLABFUNCTIONS_H_
 #define WORLD_MATLABFUNCTIONS_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "./common.h"
+
+//-----------------------------------------------------------------------------
+// fftshift() swaps the left and right halves of input vector.
+// http://www.mathworks.com/help/matlab/ref/fftshift.html
+// Input:
+//   x              : Input vector
+//   x_length       : Length of x
+// Output:
+//   y              : Swapped vector x
+// Caution:
+//   Lengths of index and edges must be the same.
+//-----------------------------------------------------------------------------
+void fftshift(double *x, int x_length, double *y);
 
 //-----------------------------------------------------------------------------
 // histc() counts the number of values in vector x that fall between the
@@ -166,9 +175,5 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename);
 //   Output .wav file (double *)
 //-----------------------------------------------------------------------------
 double *wavread(char* filename, int *fs, int *nbit, int *wav_length);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // WORLD_MATLABFUNCTIONS_H_
