@@ -186,7 +186,7 @@ void GetOneFrameSegment(double *f0, double **spectrogram, int fft_size,
 
 }  // namespace
 
-void SynthesisFromAperiodicity(double *f0, int f0_length, double **spectrogram,
+void SynthesisFromAperiodicityOld(double *f0, int f0_length, double **spectrogram,
     int fft_size, double **aperiodicity, int number_of_bands, double target_f0,
     double frame_period, int fs, int y_length, double *y) {
   double *impulse_response = new double[fft_size];

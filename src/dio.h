@@ -6,6 +6,10 @@
 #ifndef WORLD_DIO_H_
 #define WORLD_DIO_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // Struct for DIO
 //-----------------------------------------------------------------------------
@@ -31,7 +35,7 @@ typedef struct {
 //   time_axis      : Temporal positions.
 //   f0             : F0 contour.
 //-----------------------------------------------------------------------------
-void Dio(double *x, int x_length, int fs, double frame_period,
+void DioOld(double *x, int x_length, int fs, double frame_period,
   double *time_axis, double *f0);
 
 //-----------------------------------------------------------------------------
@@ -66,5 +70,9 @@ void InitializeDioOption(DioOption *option);
 //   The number of samples required to store the results of Dio()
 //-----------------------------------------------------------------------------
 int GetSamplesForDIO(int fs, int x_length, double frame_period);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_DIO_H_

@@ -5,6 +5,10 @@
 #ifndef WORLD_SYNTHESIS_H_
 #define WORLD_SYNTHESIS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // Synthesis() synthesizes the voice from three parameters.
 // Input:
@@ -22,5 +26,9 @@
 void Synthesis(double *f0, int f0_length, double **spectrogram,
   double **residual_spectrogram, int fft_size, double frame_period, int fs,
   int y_length, double *y);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_SYNTHESIS_H_

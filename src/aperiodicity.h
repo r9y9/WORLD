@@ -5,6 +5,10 @@
 #ifndef WORLD_APERIODICITY_H_
 #define WORLD_APERIODICITY_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // The latest version of aperiodicity estimation in TANDEM-STRAIGHT.
 // This function skipped several complex processes.
@@ -21,5 +25,9 @@
 //-----------------------------------------------------------------------------
 void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
     int f0_length, double *time_axis, int fft_size, double **aperiodicity);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_APERIODICITY_H_

@@ -641,7 +641,7 @@ void Dio(double *x, int x_length, int fs, const DioOption option,
       option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);
 }
 
-void Dio(double *x, int x_length, int fs, double frame_period,
+void DioOld(double *x, int x_length, int fs, double frame_period,
     double *time_axis, double *f0) {
   const double kTargetFs = 4000.0;
   const double kF0Floor = 80.0;

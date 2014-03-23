@@ -5,6 +5,10 @@
 #ifndef WORLD_TANDEM_AP_H_
 #define WORLD_TANDEM_AP_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // GetNumberOfBands() calculate the number of bands for aperiodicity.
 // Input:
@@ -28,7 +32,12 @@ int GetNumberOfBands(int fs);
 //   Value used for the aperiodicity estimation. This value is used for
 //   the synthesis.
 //-----------------------------------------------------------------------------
-double AperiodicityRatio(double *x, int x_length, int fs, double *f0,
+// v0.1.2
+double AperiodicityRatioOld(double *x, int x_length, int fs, double *f0,
   int f0_length, double frame_period, double **aperiodicity);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_TANDEM_AP_H_

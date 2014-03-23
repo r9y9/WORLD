@@ -5,6 +5,10 @@
 #ifndef WORLD_SYNTHESISFROMAPERIODICITY_H_
 #define WORLD_SYNTHESISFROMAPERIODICITY_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // synthesis_ap() synthesize the voice based on f0, spectrogram and
 // aperiodicity (not excitation signal).
@@ -24,5 +28,9 @@
 void SynthesisFromAperiodicity(double *f0, int f0_length, double **spectrogram,
     double **aperiodicity, int fft_size, double frame_period, int fs,
     int y_length, double *y);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_SYNTHESISFROMAPERIODICITY_H_

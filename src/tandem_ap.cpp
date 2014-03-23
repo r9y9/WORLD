@@ -533,7 +533,7 @@ int GetNumberOfBands(int fs) {
   return static_cast<int>(log(fs / kNormalCutoff) / world::kLog2);
 }
 
-double AperiodicityRatio(double *x, int x_length, int fs, double *f0,
+double AperiodicityRatioOld(double *x, int x_length, int fs, double *f0,
     int f0_length, double frame_period, double **aperiodicity) {
   double max_f0 = 0.0;
   for (int i = 0; i < f0_length; ++i)

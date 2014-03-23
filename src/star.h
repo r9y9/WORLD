@@ -5,6 +5,10 @@
 #ifndef WORLD_STAR_H_
 #define WORLD_STAR_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // Star() calculates the spectrogram that consists of spectral envelopes
 // estimated by STAR.
@@ -29,5 +33,9 @@ void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
 //   FFT size
 //-----------------------------------------------------------------------------
 int GetFFTSizeForStar(int fs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_STAR_H_
