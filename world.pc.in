@@ -4,7 +4,7 @@ libdir=@libdir@
 includedir=@includedir@
 
 Name: @PACKAGE@
-Description: World
+Description: WORLD - a high-quality speech analysis, modification and synthesis system.
 Version: @VERSION@
 Cflags: -I${includedir}
 Libs: -L${libdir} @libs@

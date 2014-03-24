@@ -1,5 +1,5 @@
 APPNAME = 'world'
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 from waflib import Options
 import sys
