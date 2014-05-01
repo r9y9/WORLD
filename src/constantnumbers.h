@@ -1,10 +1,9 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // This header file only defines constant numbers used for several function.
 //-----------------------------------------------------------------------------
-
 #ifndef WORLD_CONSTANT_NUMBERS_H_
 #define WORLD_CONSTANT_NUMBERS_H_
 
@@ -14,6 +13,7 @@ namespace world {
   const double kFloorF0 = 71.0;
   const double kCeilF0 = 800.0;
   const double kDefaultF0 = 500.0;
+  const double kDefaultF0ForSynthesis = 150.0;
 //  const double kDefaultF0 = 150.0;
   const double kLog2 = 0.69314718055994529;
   // Maximum standard deviation not to be selected as a best f0.

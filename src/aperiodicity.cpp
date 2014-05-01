@@ -1,14 +1,14 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Aperiodicity based on TANDEM-STRAIGHT.
 // This function would be changed in near future.
 //-----------------------------------------------------------------------------
+#include "./aperiodicity.h"
+
 #include <math.h>
 #include <stdlib.h>
-
-#include "./aperiodicity.h"
 
 #include "./constantnumbers.h"
 #include "./matlabfunctions.h"
@@ -240,7 +240,7 @@ void f0PredictionResidualFixSegmentW(double *x, int x_length, double fs,
           internal_parameters.wxHa) / GetStdwx(internal_parameters.wsqrt,
           segment_length, x, x_length, origin, internal_parameters.wx);
     } else {  // Aperiodicity does not use if the speech is unvoiced.
-      aperiodicity[i][current_band] = 0.9999999995; // safe guard
+      aperiodicity[i][current_band] = 0.9999999995;  // safe guard
     }
   }
   DestroyInternalParameters(&internal_parameters);

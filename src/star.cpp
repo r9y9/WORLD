@@ -1,25 +1,19 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Spectral envelope estimation based on STAR (Synchronous Technique and Adroit
 // Restoration).
+//
+// Caution: We reccomend to use the new algorithm CheapTrick().
+//          Star() will be removed by WORLD project in next version.
 //-----------------------------------------------------------------------------
 #include "./star.h"
 
 #include <math.h>
-#include <stdlib.h>
 
 #include "./constantnumbers.h"
 #include "./matlabfunctions.h"
-
-#include <stdio.h>
-#if (defined (__WIN32__) || defined (_WIN32)) && !defined (__MINGW32__)
-#pragma warning(disable : 4996)
-#include <conio.h>
-#include <windows.h>
-#pragma comment(lib, "winmm.lib")
-#endif
 
 namespace {
 

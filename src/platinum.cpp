@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Excitation signal extraction by PLATINUM.
@@ -9,7 +9,6 @@
 #include "./platinum.h"
 
 #include <math.h>
-#include <stdlib.h>
 
 #include "./common.h"
 #include "./constantnumbers.h"
@@ -36,7 +35,7 @@ int GetNearestPulseIndex(int pulse_count, double current_time,
       minimum_value = tmp;
       minimum_index = i;
     }
-    index = 1 + matlab_round(pulse_locations[minimum_index] * fs);
+    index = matlab_round(pulse_locations[minimum_index] * fs);
   }
 
   return index;
@@ -57,11 +56,6 @@ void GetOneFrameResidualSpec(double *x, int x_length, int fs,
     current_time, fs, pulse_locations);
 
   int window_length = matlab_round(current_t0 * 2.0);
-  if (window_length + index - matlab_round(current_t0) >= x_length) {
-    for (int i = 0; i < minimum_phase->fft_size; ++i)
-      residual_spectrum[i] = randn() * world::kMySafeGuardMinimum;
-    return;
-  }
 
   // Windowing and FFT
   for (int i = 0; i < window_length; ++i)
@@ -71,6 +65,7 @@ void GetOneFrameResidualSpec(double *x, int x_length, int fs,
       (window_length + 1.0)));
   for (int i = window_length; i < minimum_phase->fft_size; ++i)
     forward_real_fft->waveform[i] = 0.0;
+
   fft_execute(forward_real_fft->forward_fft);
 
   // Convolution
@@ -105,9 +100,9 @@ int GetWedgeInOneSection(double *x, int x_length, int fs, double *f0,
     double frame_period, int start_index, int end_index) {
   int center_time = (start_index + end_index + 1) / 2;
   int t0 = matlab_round((fs / (f0[center_time] ==
-    0.0 ? world::kDefaultF0 : f0[center_time])));
+    0.0 ? world::kDefaultF0ForSynthesis : f0[center_time])));
   int center_index =
-    matlab_round((1 + center_time) * frame_period * fs / 1000.0);
+    matlab_round((1 + center_time) * frame_period * fs);
 
   int wedge = 0;
   double peak_value = 0.0;
@@ -183,14 +178,15 @@ int GetPulseLocationsInOneSection(int fs, int x_length, int start_index,
     int end_index, double frame_period, int current_wedge,
     double *total_phase, int current_count, double *pulse_locations) {
   start_index =
-    MyMax(0, static_cast<int>(fs * start_index * frame_period / 1000.0));
+    MyMax(0, matlab_round(fs * start_index * frame_period));
   end_index = MyMin(x_length - 1,
-      matlab_round(fs * (end_index + 1.0) * frame_period / 1000.0) -1);
+      matlab_round(fs * (end_index + 1.0) * frame_period));
 
-  double tmp = total_phase[current_wedge];
+  double tmp = total_phase[current_wedge] - 2 * world::kPi *
+    floor(total_phase[0] - total_phase[current_wedge] / 2.0 / world::kPi);
   for (int i = start_index; i < end_index; ++i)
     if (fabs(fmod(total_phase[i + 1] - tmp, 2.0 * world::kPi) -
-      fmod(total_phase[i] - tmp, 2.0 * world::kPi)) > world::kPi / 2.0)
+        fmod(total_phase[i] - tmp, 2.0 * world::kPi)) > world::kPi / 2.0)
       pulse_locations[current_count++] = static_cast<double>(i) / fs;
   return current_count;
 }
@@ -208,7 +204,7 @@ void GetTotalPhase(double *f0, int f0_length, int x_length, double *time_axis,
   double *interpolated_f0 = new double[x_length];
 
   for (int i = 0; i < f0_length; ++i)
-    fixed_f0[i] = f0[i] == 0 ? world::kDefaultF0 : f0[i];
+    fixed_f0[i] = f0[i] == 0 ? world::kDefaultF0ForSynthesis : f0[i];
   for (int i = 0; i < x_length; ++i)
     time_axis_of_x[i] = static_cast<double>(i) / fs;
 
@@ -246,18 +242,18 @@ int GetPulseLocations(double *x, int x_length, int fs, double *f0,
   double *total_phase = new double[x_length];
   GetTotalPhase(f0, f0_length, x_length, time_axis, fs, total_phase);
 
-  int pulse_count = 0;
+  int number_of_pulses = 0;
   for (int i = 0; i < number_of_voiced_sections; ++i) {
-    pulse_count = GetPulseLocationsInOneSection(fs, x_length, start_list[i],
-        end_list[i], frame_period, wedge_list[i], total_phase, pulse_count,
-        pulse_locations);
+    number_of_pulses = GetPulseLocationsInOneSection(fs, x_length,
+        start_list[i], end_list[i], frame_period, wedge_list[i], total_phase,
+        number_of_pulses, pulse_locations);
   }
 
   delete[] total_phase;
   delete[] wedge_list;
   delete[] end_list;
   delete[] start_list;
-  return pulse_count;
+  return number_of_pulses;
 }
 
 }  // namespace
@@ -265,10 +261,10 @@ int GetPulseLocations(double *x, int x_length, int fs, double *f0,
 void Platinum(double *x, int x_length, int fs, double *time_axis, double *f0,
     int f0_length, double **spectrogram, int fft_size,
     double **residual_spectrogram) {
-  double frame_period = (time_axis[1] - time_axis[0]) * 1000.0;
+  double frame_period = (time_axis[1] - time_axis[0]);
 
   double *pulse_locations = new double[x_length];
-  int pulse_count = GetPulseLocations(x, x_length, fs, f0, f0_length,
+  int number_of_pulses = GetPulseLocations(x, x_length, fs, f0, f0_length,
       time_axis, frame_period, pulse_locations);
 
   double *residual_spectrum = new double[fft_size];
@@ -283,15 +279,16 @@ void Platinum(double *x, int x_length, int fs, double *time_axis, double *f0,
   InitializeForwardRealFFT(fft_size, &forward_real_fft);
 
   double current_f0;
-  for (int i = 1; i < f0_length; ++i) {
-    current_f0 = f0[i] <= world::kFloorF0 ? world::kDefaultF0 : f0[i];
+  for (int i = 0; i < f0_length; ++i) {
+    current_f0 =
+      f0[i] <= world::kFloorF0 ? world::kDefaultF0ForSynthesis : f0[i];
     for (int j = 0; j <= fft_size / 2; ++j)
       minimum_phase.log_spectrum[j] = log(spectrogram[i][j]) / 2.0;
 
     GetOneFrameResidualSpec(x, x_length, fs,
-        i * frame_period / 1000.0, fs / current_f0,
+        i * frame_period, fs / current_f0,
         &forward_real_fft, &minimum_phase, pulse_locations,
-        pulse_count, residual_spectrogram[i]);
+        number_of_pulses, residual_spectrogram[i]);
   }
   DestroyMinimumPhaseAnalysis(&minimum_phase);
   DestroyForwardRealFFT(&forward_real_fft);

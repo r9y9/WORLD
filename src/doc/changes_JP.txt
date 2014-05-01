@@ -51,13 +51,19 @@ Version 0.1.2				2012/9/16
 Version 0.1.3				2013/7/26
  * DIOで推定されたF0を瞬時周波数に基づいて補正する関数StoneMask()の実装．
  * ファイル名の命名規則に対応するためconstant_numbers.hをconstantnumbers.hに修正．
- * 非周期性指標推定結果の出力をオクターブバンド毎の出力からfft_size / 2 + 1点のスペクトル形状に修正
- * 非周期性指標の変更に基づき合成関数の修正
+ * 非周期性指標推定結果の出力をオクターブバンド毎の出力からfft_size / 2 + 1点のスペクトル形状に修正．
+ * 非周期性指標の変更に基づき合成関数の修正．
    上記2つの関数はaperiodicity.cpp, synthesisfromaperiodicity.cppとして修正．
  * その他確認されていたバグの修正．
 
+Version 0.1.4				2014/4/29
+ * 最新版スペクトル包絡推定法CheapTrick()の実装．
+ * Dio()をMatlab版に合わせて修正．
+ * Synthesis()を精密に実装．
+ * その他関数に含まれていたバグの修正．
+
 今後の予定．
 
-Version 0.1.4
+Version 0.1.5
 非周期性指標推定法D4C (Definitive Decomposition Done Dirt Cheap)の実装．
-
+memo: D4Cは開発中止の可能性大．

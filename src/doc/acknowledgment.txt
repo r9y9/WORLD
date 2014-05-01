@@ -16,4 +16,4 @@ He modified dio.cpp to fix several bugs.
 We introduced his/hers ideas and released Version 0.1.1.
 http://custom-made.seesaa.net/
 
-And others.
+And all users.

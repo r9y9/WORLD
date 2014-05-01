@@ -2,10 +2,10 @@
 /*           WORLD: High-quality speech analysis,                    */
 /*           modification and synthesis system                       */
 /*           developed by M. Morise                                  */
-/*           http://www.aspl.is.ritsumei.ac.jp/morise/world/         */
+/*           http://ml.cs.yamanashi.ac.jp/world/                     */
 /* ----------------------------------------------------------------- */
 /*                                                                   */
-/*  Copyright (c) 2010-2013  M. Morise                               */
+/*  Copyright (c) 2010-2014  M. Morise                               */
 /*                                                                   */
 /* All rights reserved.                                              */
 /*                                                                   */

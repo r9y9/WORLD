@@ -9,7 +9,7 @@ Please see test.cpp.
 
 (1) F0 estimation by Dio()
 (1-1) F0 is refined by StoneMask() if you need more accurate result.
-(2) Spectral envelope estimation by Star()
+(2) Spectral envelope estimation by CheapTrick()
 (3-1) Excitation signal extraction by Platinum()
 (3-2) You can use AperiodicityRatio() if you want to use 
       aperiodicity instead of extitation signal.

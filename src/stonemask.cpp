@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // F0 estimation based on instantaneous frequency.
@@ -8,7 +8,6 @@
 #include "./stonemask.h"
 
 #include <math.h>
-#include <stdlib.h>
 
 #include "./common.h"
 #include "./constantnumbers.h"
@@ -190,10 +189,10 @@ double GetMeanF0(double *x, int x_length, int fs, double current_time,
 }
 
 //-----------------------------------------------------------------------------
-// GetRefineF0() fixes the F0 estimated by Dio(). This function uses
+// GetRefinedF0() fixes the F0 estimated by Dio(). This function uses
 // instantaneous frequency.
 //-----------------------------------------------------------------------------
-double GetRefineF0(double *x, int x_length, int fs, double current_time,
+double GetRefinedF0(double *x, int x_length, int fs, double current_time,
     double current_f0) {
   if (current_f0 == 0.0)
     return 0.0;
@@ -217,7 +216,7 @@ double GetRefineF0(double *x, int x_length, int fs, double current_time,
       half_window_length * 2 + 1);
 
   // If amount of correction is overlarge (20 %), initial F0 is employed.
-  if (abs(mean_f0 - f0_initial) / f0_initial > 0.2) mean_f0 = f0_initial;
+  if (fabs(mean_f0 - f0_initial) / f0_initial > 0.2) mean_f0 = f0_initial;
 
   delete[] base_time;
 
@@ -229,5 +228,5 @@ double GetRefineF0(double *x, int x_length, int fs, double current_time,
 void StoneMask(double *x, int x_length, int fs, double *time_axis, double *f0,
     int f0_length, double *refined_f0) {
   for (int i = 0; i < f0_length; i++)
-    refined_f0[i] = GetRefineF0(x, x_length, fs, time_axis[i], f0[i]);
+    refined_f0[i] = GetRefinedF0(x, x_length, fs, time_axis[i], f0[i]);
 }

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2013 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Voice synthesis based on f0, spectrogram and aperiodicity.
@@ -8,7 +8,6 @@
 #include "./synthesisfromaperiodicity.h"
 
 #include <math.h>
-#include <stdlib.h>
 
 #include "./common.h"
 #include "./constantnumbers.h"
@@ -229,7 +228,7 @@ int GetPulseLocationsForTimeBase(double *interpolated_f0, double *time_axis,
 
   double *wrap_phase_abs = new double[y_length];
   for (int i = 0; i < y_length - 1; ++i)
-    wrap_phase_abs[i] = abs(wrap_phase[i + 1] - wrap_phase[i]);
+    wrap_phase_abs[i] = fabs(wrap_phase[i + 1] - wrap_phase[i]);
 
   int *tmp_index = new int[y_length];
   int number_of_pulses = 0;

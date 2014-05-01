@@ -32,8 +32,7 @@ int GetNumberOfBands(int fs);
 //   Value used for the aperiodicity estimation. This value is used for
 //   the synthesis.
 //-----------------------------------------------------------------------------
-// v0.1.2
-double AperiodicityRatioOld(double *x, int x_length, int fs, double *f0,
+double AperiodicityRatio(double *x, int x_length, int fs, double *f0,
   int f0_length, double frame_period, double **aperiodicity);
 
 #ifdef __cplusplus
