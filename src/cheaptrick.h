@@ -25,8 +25,8 @@ void CheapTrick(double *x, int x_length, int fs, double *time_axis, double *f0,
   int f0_length, double **spectrogram);
 
 //-----------------------------------------------------------------------------
-// GetFFTSizeForStar() calculates the FFT size based on the sampling frequency
-// and the lower limit of f0 (It is defined in world.h).
+// GetFFTSizeForCheapTrick() calculates the FFT size based on the sampling
+// frequency and the lower limit of f0 (It is defined in world.h).
 // Input:
 //   fs      : Sampling frequency
 // Output:

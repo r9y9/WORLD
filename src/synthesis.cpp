@@ -162,7 +162,7 @@ void Synthesis(double *f0, int f0_length, double **spectrogram,
   InitializeInverseRealFFT(fft_size, &inverse_real_fft);
 
   double *pulse_locations = new double[y_length];
-  // fractional_index is for the future version of WORLD
+  // fractional_index is for the future version of WORLD.s
   // This version does not use it.
   double *fractional_index = new double[y_length];
   int number_of_pulses = GetTimeBase(f0, f0_length, fs, frame_period / 1000.0,
@@ -187,4 +187,6 @@ void Synthesis(double *f0, int f0_length, double **spectrogram,
   DestroyMinimumPhaseAnalysis(&minimum_phase);
   DestroyInverseRealFFT(&inverse_real_fft);
   delete[] impulse_response;
+  delete[] pulse_locations;
+  delete[] fractional_index;
 }
