@@ -151,12 +151,13 @@ void GetPowerSpectrum(int fs, double current_f0, int fft_size,
   for (int i = 0; i < upper_limit; ++i)
     low_frequency_axis[i] = static_cast<double>(i) * fs / fft_size;
 
+  // Bug fix! 2014/10/11 by M. Morise
+  int upper_limit_replica = 1 + static_cast<int>(current_f0 * fft_size / fs);
   interp1Q(current_f0 - low_frequency_axis[0],
       -static_cast<double>(fs) / fft_size, power_spectrum, upper_limit + 1,
-      low_frequency_axis, upper_limit, low_frequency_replica);
+      low_frequency_axis, upper_limit_replica, low_frequency_replica);
 
-  upper_limit = 1 + static_cast<int>(current_f0 * fft_size / fs);
-  for (int i = 0; i < upper_limit; ++i)
+  for (int i = 0; i < upper_limit_replica; ++i)
     power_spectrum[i] += low_frequency_replica[i];
 
   delete[] low_frequency_replica;
