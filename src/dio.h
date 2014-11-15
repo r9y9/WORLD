@@ -52,6 +52,13 @@ void DioOld(double *x, int x_length, int fs, double frame_period,
 void Dio(double *x, int x_length, int fs, const DioOption option,
   double *time_axis, double *f0);
 
+// This function is basically same as Dio but different in argument type:
+// `const DioOption` -> `const DioOption*`
+// This function can be called by languages that doesn't support struct passing
+// by value (e.g. Julia)
+void DioByOptPtr(double *x, int x_length, int fs, const DioOption *option,
+  double *time_axis, double *f0);
+
 //-----------------------------------------------------------------------------
 // InitializeDioOption allocates the memory to the struct and sets the
 // default parameters.
