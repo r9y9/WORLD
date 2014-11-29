@@ -12,7 +12,7 @@ This version of WORLD is used by the following bindings:
 - Linux
 - Mac OS X
 
-Note that the WORLD (probably) works in windows but currently I don't provide any build script. You can build WORLD manually.
+Note that I don't provide a build script for windows, however, you can build the WORLD manually in windows as well.
 
 ## Installation
 
