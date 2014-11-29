@@ -1,43 +1,29 @@
-# 音声分析合成方式 World + waf
+# WORLD
 ------------------------------------
 
-## これは何？
+This repository hosts a slightly modified version of WORLD to provide a easy way to use from external programs. See [here](http://ml.cs.yamanashi.ac.jp/world/english/index.html) for the original WORLD.
 
-* worldをwafでビルド・インストールできるようにしたものです。
-* Cからも呼べるようにextern "C" をつけました
-* Goから呼びたかったので作りました
-* 現在は、WORLD v0.1.4（2014/05/01 での最新は0.1.4）を元になっています
+## Changes from the original WORLD
 
-worldについては、[本家ホームページ](http://ml.cs.yamanashi.ac.jp/world/)を参照ください
+- Add `extern C` in header files
+- Change name of old interface `Dio` -> `DioOld`
+- Add `DioByOptPtr` (for calling from Julia that doesn't support struct-passing by value)
+- Integrate waf
+- Support pkg-config
 
-## インストール
+## Supported Platforms
+
+- Linux
+- Mac OS X
+
+Note that the WORLD (probably) works in windows but currently I don't provide any build script. You can build WORLD manually.
+
+## Installation
 
      ./waf configure && ./waf
      sudo ./waf install
 
-## サンプル
+## Bindings
 
-### Go の場合
-
-      go run world.go
-
-### C++ の場合
-
-      g++ world.cpp -lworld
-
-### C の場合
-
-      gcc world.c -lworld
-
-## 注意
-
-* 公式のパッケージではありません
-* 変更が、作者の意図に沿っていない可能性があります
-
-## ソースコードに加えた変更点
-
-* 主な音声分析変換合成のAPIを提供するヘッダファイルに extern "C" を入れた
-* 名前衝突を回避するため、同一名の関数のうちdeprecatedになるであろう関数名を変更した（e.g. Dio -> DioOld）
-* `DioByOptPtr` を追加。構造体の値渡しをサポートしていない言語から呼ぶため（juliaから呼びたかった）
-
-Goから使おうと思ったらこうなりました。おしまい
+- [Julia](https://github.com/r9y9/WORLD.jl)
+- [Golang](https://github.com/r9y9/go-world)
