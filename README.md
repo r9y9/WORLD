@@ -1,15 +1,11 @@
 # WORLD
-------------------------------------
 
 This repository hosts a slightly modified version of WORLD to provide a easy way to use from external programs. See [here](http://ml.cs.yamanashi.ac.jp/world/english/index.html) for the original WORLD.
 
-## Changes from the original WORLD
+This version of WORLD is used by the following bindings:
 
-- Add `extern C` in header files
-- Change name of old interface `Dio` -> `DioOld`
-- Add `DioByOptPtr` (for calling from Julia that doesn't support struct-passing by value)
-- Integrate waf
-- Support pkg-config
+- [r9y9/WORLD.jl](https://github.com/r9y9/WORLD.jl)
+- [r9y9/go-world](https://github.com/r9y9/go-world)
 
 ## Supported Platforms
 
@@ -23,7 +19,10 @@ Note that the WORLD (probably) works in windows but currently I don't provide an
      ./waf configure && ./waf
      sudo ./waf install
 
-## Bindings
+## Changes from the original WORLD
 
-- [Julia](https://github.com/r9y9/WORLD.jl)
-- [Golang](https://github.com/r9y9/go-world)
+- Add `extern C` in header files
+- Change name of old interface `Dio` -> `DioOld`
+- Add `DioByOptPtr` (for calling from Julia that doesn't support struct-passing by value)
+- Integrate waf
+- Support pkg-config
