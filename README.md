@@ -1,5 +1,8 @@
 # WORLD
 
+[![Build Status](https://travis-ci.org/r9y9/WORLD.svg?branch=master)](https://travis-ci.org/r9y9/WORLD)
+[![Build status](https://ci.appveyor.com/api/projects/status/4j72afijlat4lb8w/branch/master?svg=true)](https://ci.appveyor.com/project/r9y9/world/branch/master)
+
 This repository hosts a slightly modified version of WORLD to provide a easy way to use from external programs. See [here](http://ml.cs.yamanashi.ac.jp/world/english/index.html) for the original WORLD.
 
 This version of WORLD is used by the following bindings:
@@ -12,8 +15,7 @@ This version of WORLD is used by the following bindings:
 
 - Linux
 - Mac OS X
-
-Note that I don't provide a build script for windows, however, you can build the WORLD manually in windows as well.
+- Windows (MSVC)
 
 ## Installation
 
