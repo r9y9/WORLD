@@ -150,7 +150,7 @@ int GetTimeBase(double *f0, int f0_length, int fs,
 
 }  // namespace
 
-void Synthesis(double *f0, int f0_length, double **spectrogram,
+DLLEXPORT void Synthesis(double *f0, int f0_length, double **spectrogram,
     double **residual_spectrogram, int fft_size, double frame_period,
     int fs, int y_length, double *y) {
   double *impulse_response = new double[fft_size];

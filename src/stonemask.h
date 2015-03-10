@@ -5,6 +5,8 @@
 #ifndef WORLD_STONEMASK_H_
 #define WORLD_STONEMASK_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,8 +23,8 @@ extern "C" {
 // Output:
 //   refined_f0             : Refined F0
 //-----------------------------------------------------------------------------
-void StoneMask(double *x, int x_length, int fs, double *time_axis, double *f0,
-    int f0_length, double *refined_f0);
+DLLEXPORT void StoneMask(double *x, int x_length, int fs, double *time_axis,
+    double *f0, int f0_length, double *refined_f0);
 
 #ifdef __cplusplus
 }

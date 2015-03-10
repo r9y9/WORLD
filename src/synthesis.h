@@ -5,6 +5,8 @@
 #ifndef WORLD_SYNTHESIS_H_
 #define WORLD_SYNTHESIS_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,7 +25,7 @@ extern "C" {
 // Output:
 //   y                      : Synthesized voice
 //-----------------------------------------------------------------------------
-void Synthesis(double *f0, int f0_length, double **spectrogram,
+DLLEXPORT void Synthesis(double *f0, int f0_length, double **spectrogram,
   double **residual_spectrogram, int fft_size, double frame_period, int fs,
   int y_length, double *y);
 

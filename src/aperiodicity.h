@@ -5,6 +5,8 @@
 #ifndef WORLD_APERIODICITY_H_
 #define WORLD_APERIODICITY_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,7 +25,7 @@ extern "C" {
 //   Value used for the aperiodicity estimation. This value is used for
 //   the synthesis.
 //-----------------------------------------------------------------------------
-void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
+DLLEXPORT void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
     int f0_length, double *time_axis, int fft_size, double **aperiodicity);
 
 #ifdef __cplusplus

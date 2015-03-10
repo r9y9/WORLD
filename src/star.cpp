@@ -151,12 +151,12 @@ void StarGeneralBody(double *x, int x_length, int fs, double current_f0,
 
 }  // namespace
 
-int GetFFTSizeForStar(int fs) {
+DLLEXPORT int GetFFTSizeForStar(int fs) {
   return static_cast<int>(pow(2.0, 1.0 +
       static_cast<int>(log(3.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
 }
 
-void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
+DLLEXPORT void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
     int f0_length, double **spectrogram) {
   int fft_size = GetFFTSizeForStar(fs);
 

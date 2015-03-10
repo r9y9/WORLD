@@ -225,8 +225,8 @@ double GetRefinedF0(double *x, int x_length, int fs, double current_time,
 
 }  // namespace
 
-void StoneMask(double *x, int x_length, int fs, double *time_axis, double *f0,
-    int f0_length, double *refined_f0) {
+DLLEXPORT void StoneMask(double *x, int x_length, int fs, double *time_axis,
+    double *f0, int f0_length, double *refined_f0) {
   for (int i = 0; i < f0_length; i++)
     refined_f0[i] = GetRefinedF0(x, x_length, fs, time_axis[i], f0[i]);
 }
