@@ -574,7 +574,7 @@ int GetNumberOfBands(int fs) {
 
 }  // namespace
 
-void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
+DLLEXPORT void AperiodicityRatio(double *x, int x_length, int fs, double *f0,
     int f0_length, double *time_axis, int fft_size, double **aperiodicity) {
   double **original_ap = new double *[f0_length];
   double **normalized_ap = new double *[f0_length];

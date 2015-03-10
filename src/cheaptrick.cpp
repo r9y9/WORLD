@@ -257,13 +257,13 @@ void CheapTrickGeneralBody(double *x, int x_length, int fs, double current_f0,
 }  // namespace
 
 
-int GetFFTSizeForCheapTrick(int fs) {
+DLLEXPORT int GetFFTSizeForCheapTrick(int fs) {
   return static_cast<int>(pow(2.0, 1.0 +
       static_cast<int>(log(3.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
 }
 
-void CheapTrick(double *x, int x_length, int fs, double *time_axis, double *f0,
-    int f0_length, double **spectrogram) {
+DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
+    double *f0, int f0_length, double **spectrogram) {
   int fft_size = GetFFTSizeForCheapTrick(fs);
   double *spectral_envelope = new double[fft_size];
 

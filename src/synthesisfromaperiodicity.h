@@ -5,6 +5,8 @@
 #ifndef WORLD_SYNTHESISFROMAPERIODICITY_H_
 #define WORLD_SYNTHESISFROMAPERIODICITY_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,9 +27,9 @@ extern "C" {
 // Output:
 //   y                    : Calculated voice
 //-----------------------------------------------------------------------------
-void SynthesisFromAperiodicity(double *f0, int f0_length, double **spectrogram,
-    double **aperiodicity, int fft_size, double frame_period, int fs,
-    int y_length, double *y);
+DLLEXPORT void SynthesisFromAperiodicity(double *f0, int f0_length,
+    double **spectrogram, double **aperiodicity, int fft_size,
+    double frame_period, int fs, int y_length, double *y);
 
 #ifdef __cplusplus
 }

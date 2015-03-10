@@ -5,6 +5,8 @@
 #ifndef WORLD_PLATINUM_H_
 #define WORLD_PLATINUM_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,8 +27,8 @@ extern "C" {
 // Output:
 //   residual_spectrogram : Extracted spectrum of the excitation signal
 //-----------------------------------------------------------------------------
-void Platinum(double *x, int x_length, int fs, double *time_axis, double *f0,
-  int f0_length, double **spectrogram, int fft_size,
+DLLEXPORT void Platinum(double *x, int x_length, int fs, double *time_axis,
+  double *f0, int f0_length, double **spectrogram, int fft_size,
   double **residual_spectrogram);
 
 #ifdef __cplusplus

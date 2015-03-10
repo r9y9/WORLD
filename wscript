@@ -8,15 +8,17 @@ import re
 import waflib
 
 subdirs = [
-    'src', 
+    'src',
 ]
 
 top = '.'
 out = 'build'
 
+
 def options(opt):
     opt.load('compiler_cxx')
-    
+
+
 def configure(conf):
     conf.check_waf_version(mini='1.7.11')
     conf.load('compiler_cxx')
@@ -25,7 +27,8 @@ def configure(conf):
     conf.env['APPNAME'] = APPNAME
 
     ver = conf.env.CC_VERSION
-    conf.env.append_unique('CXXFLAGS', ['-O2', '-Wall', '-g'])
+    if conf.env.COMPILER_CXX != 'msvc':
+        conf.env.append_unique('CXXFLAGS', ['-O2', '-Wall', '-g'])
     conf.env.HPREFIX = conf.env.PREFIX + '/include/world'
     conf.recurse(subdirs)
 
@@ -46,10 +49,11 @@ CXXFLAGS:                %s
         conf.env.COMPILER_CXX,
         '.'.join(conf.env.CC_VERSION),
         ' '.join(conf.env.CXXFLAGS)
-        )
+    )
 
     conf.write_config_header('src/world-config.h')
-            
+
+
 def build(bld):
     bld.recurse(subdirs)
 
@@ -64,11 +68,11 @@ def build(bld):
     for l in set(libs):
         ls = ls + ' -l' + l
 
-    bld(source = 'world.pc.in',
-        prefix = bld.env['PREFIX'],
-        exec_prefix = '${prefix}',
-        libdir = bld.env['LIBDIR'],
-        libs = ls,
-        includedir = '${prefix}/include',
-        PACKAGE = APPNAME,
-        VERSION = VERSION)
+    bld(source='world.pc.in',
+        prefix=bld.env['PREFIX'],
+        exec_prefix='${prefix}',
+        libdir=bld.env['LIBDIR'],
+        libs=ls,
+        includedir='${prefix}/include',
+        PACKAGE=APPNAME,
+        VERSION=VERSION)

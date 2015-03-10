@@ -6,6 +6,8 @@
 #ifndef WORLD_DIO_H_
 #define WORLD_DIO_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,7 +37,7 @@ typedef struct {
 //   time_axis      : Temporal positions.
 //   f0             : F0 contour.
 //-----------------------------------------------------------------------------
-void DioOld(double *x, int x_length, int fs, double frame_period,
+DLLEXPORT void DioOld(double *x, int x_length, int fs, double frame_period,
   double *time_axis, double *f0);
 
 //-----------------------------------------------------------------------------
@@ -49,14 +51,14 @@ void DioOld(double *x, int x_length, int fs, double frame_period,
 //   time_axis  : Temporal positions.
 //   f0         : F0 contour.
 //-----------------------------------------------------------------------------
-void Dio(double *x, int x_length, int fs, const DioOption option,
+DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
   double *time_axis, double *f0);
 
 // This function is basically same as Dio but different in argument type:
 // `const DioOption` -> `const DioOption*`
 // This function can be called by languages that doesn't support struct passing
 // by value (e.g. Julia)
-void DioByOptPtr(double *x, int x_length, int fs, const DioOption *option,
+DLLEXPORT void DioByOptPtr(double *x, int x_length, int fs, const DioOption *option,
   double *time_axis, double *f0);
 
 //-----------------------------------------------------------------------------
@@ -65,7 +67,7 @@ void DioByOptPtr(double *x, int x_length, int fs, const DioOption *option,
 // Output:
 //   option   : Struct for the optional parameter.
 //-----------------------------------------------------------------------------
-void InitializeDioOption(DioOption *option);
+DLLEXPORT void InitializeDioOption(DioOption *option);
 
 //-----------------------------------------------------------------------------
 // GetSamplesForDIO() calculates the number of samples required for Dio().
@@ -76,7 +78,7 @@ void InitializeDioOption(DioOption *option);
 // Output:
 //   The number of samples required to store the results of Dio()
 //-----------------------------------------------------------------------------
-int GetSamplesForDIO(int fs, int x_length, double frame_period);
+DLLEXPORT int GetSamplesForDIO(int fs, int x_length, double frame_period);
 
 #ifdef __cplusplus
 }

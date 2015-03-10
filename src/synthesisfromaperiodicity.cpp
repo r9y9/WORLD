@@ -291,9 +291,9 @@ int GetTimeBase(double *f0, int f0_length, int fs,
 
 }  // namespace
 
-void SynthesisFromAperiodicity(double *f0, int f0_length, double **spectrogram,
-    double **aperiodicity, int fft_size, double frame_period, int fs,
-    int y_length, double *y) {
+DLLEXPORT void SynthesisFromAperiodicity(double *f0, int f0_length,
+     double **spectrogram, double **aperiodicity, int fft_size,
+     double frame_period, int fs, int y_length, double *y) {
   double *impulse_response = new double[fft_size];
 
   for (int i = 0; i < y_length; ++i) y[i] = 0.0;

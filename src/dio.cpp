@@ -640,23 +640,23 @@ void OriginalDio(double *x, int x_length, int fs, double frame_period,
 
 }  // namespace
 
-int GetSamplesForDIO(int fs, int x_length, double frame_period) {
+DLLEXPORT int GetSamplesForDIO(int fs, int x_length, double frame_period) {
   return static_cast<int>(x_length / static_cast<double>(fs) /
     (frame_period / 1000.0)) + 1;
 }
 
-void Dio(double *x, int x_length, int fs, const DioOption option,
+DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
     double *time_axis, double *f0) {
   OriginalDio(x, x_length, fs, option.frame_period, option.f0_floor,
       option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);
 }
 
-void DioByOptPtr(double *x, int x_length, int fs, const DioOption* option,
+DLLEXPORT void DioByOptPtr(double *x, int x_length, int fs, const DioOption* option,
 		 double *time_axis, double *f0) {
   Dio(x, x_length, fs, *option, time_axis, f0);
 }
 
-void DioOld(double *x, int x_length, int fs, double frame_period,
+DLLEXPORT void DioOld(double *x, int x_length, int fs, double frame_period,
     double *time_axis, double *f0) {
   const double kTargetFs = 4000.0;
   const double kF0Floor = 80.0;
@@ -668,7 +668,7 @@ void DioOld(double *x, int x_length, int fs, double frame_period,
       kChannelsInOctave, kDecimationRatio, time_axis, f0);
 }
 
-void InitializeDioOption(DioOption *option) {
+DLLEXPORT void InitializeDioOption(DioOption *option) {
   // You can change default parameters.
   option->channels_in_octave = 2.0;
   option->f0_ceil = 640.0;

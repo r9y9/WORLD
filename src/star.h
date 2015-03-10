@@ -5,6 +5,8 @@
 #ifndef WORLD_STAR_H_
 #define WORLD_STAR_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,7 +23,7 @@ extern "C" {
 // Output:
 //   spectrogram  : Spectrogram estimated by STAR.
 //-----------------------------------------------------------------------------
-void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
+DLLEXPORT void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
   int f0_length, double **spectrogram);
 
 //-----------------------------------------------------------------------------
@@ -32,7 +34,7 @@ void Star(double *x, int x_length, int fs, double *time_axis, double *f0,
 // Output:
 //   FFT size
 //-----------------------------------------------------------------------------
-int GetFFTSizeForStar(int fs);
+DLLEXPORT int GetFFTSizeForStar(int fs);
 
 #ifdef __cplusplus
 }

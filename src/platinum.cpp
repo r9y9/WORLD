@@ -258,8 +258,8 @@ int GetPulseLocations(double *x, int x_length, int fs, double *f0,
 
 }  // namespace
 
-void Platinum(double *x, int x_length, int fs, double *time_axis, double *f0,
-    int f0_length, double **spectrogram, int fft_size,
+DLLEXPORT void Platinum(double *x, int x_length, int fs, double *time_axis,
+    double *f0, int f0_length, double **spectrogram, int fft_size,
     double **residual_spectrogram) {
   double frame_period = (time_axis[1] - time_axis[0]);
 

@@ -5,6 +5,8 @@
 #ifndef WORLD_CHEAPTRICK_H_
 #define WORLD_CHEAPTRICK_H_
 
+#include "./dllexport.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,8 +23,8 @@ extern "C" {
 // Output:
 //   spectrogram  : Spectrogram estimated by STAR.
 //-----------------------------------------------------------------------------
-void CheapTrick(double *x, int x_length, int fs, double *time_axis, double *f0,
-  int f0_length, double **spectrogram);
+DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
+  double *f0, int f0_length, double **spectrogram);
 
 //-----------------------------------------------------------------------------
 // GetFFTSizeForCheapTrick() calculates the FFT size based on the sampling
@@ -32,7 +34,7 @@ void CheapTrick(double *x, int x_length, int fs, double *time_axis, double *f0,
 // Output:
 //   FFT size
 //-----------------------------------------------------------------------------
-int GetFFTSizeForCheapTrick(int fs);
+DLLEXPORT int GetFFTSizeForCheapTrick(int fs);
 
 #ifdef __cplusplus
 }
