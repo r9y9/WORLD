@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // This file represents the functions about FFT (Fast Fourier Transform)
@@ -138,7 +138,6 @@ fft_plan fft_plan_dft_r2c_1d(int n, double *in, fft_complex *out,
   makect(output.n >> 2, output.ip, output.w + (output.n >> 2));
   return output;
 }
-
 
 void fft_execute(fft_plan p) {
   if (p.sign == FFT_FORWARD) {

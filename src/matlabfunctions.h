@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //-----------------------------------------------------------------------------
 #ifndef WORLD_MATLABFUNCTIONS_H_
@@ -129,16 +129,6 @@ double randn(void);
 void fast_fftfilt(double *x, int x_length, double *h, int h_length,
   int fft_size, ForwardRealFFT *forward_real_fft,
   InverseRealFFT *inverse_real_fft, double *y);
-
-//-----------------------------------------------------------------------------
-// inv() calculates the inverse matrix of input square matrix.
-// Input:
-//   r     : Input square matrix;
-//   n     : Number of dimensions of the input
-// Output:
-//   invr  : Calculated inverse matrix.
-//-----------------------------------------------------------------------------
-void inv(double **r, int n, double **invr);
 
 //-----------------------------------------------------------------------------
 // matlab_std() calculates the standard deviation of the input vector.

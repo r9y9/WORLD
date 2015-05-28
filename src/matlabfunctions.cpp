@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Matlab functions implemented for WORLD
@@ -21,7 +21,9 @@
 
 #include "./constantnumbers.h"
 
+#if (defined (__WIN32__) || defined (_WIN32)) && !defined (__MINGW32__)
 #pragma warning(disable : 4996)
+#endif
 
 namespace {
 //-----------------------------------------------------------------------------
@@ -384,32 +386,6 @@ void fast_fftfilt(double *x, int x_length, double *h, int h_length,
     y[i] = inverse_real_fft->waveform[i];
 
   delete[] x_spectrum;
-}
-
-void inv(double **r, int n, double **invr) {
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j) invr[i][j] = 0.0;
-  for (int i = 0; i < n; ++i) invr[i][i] = 1.0;
-
-  double tmp;
-  for (int i = 0; i < n; ++i) {
-    tmp = r[i][i];
-    r[i][i] = 1.0;
-    for (int j = 0; j <= i; ++j) invr[i][j] /= tmp;
-    for (int j = i + 1; j < n; ++j) r[i][j] /= tmp;
-    for (int j = i + 1; j < n; ++j) {
-      tmp = r[j][i];
-      for (int k = 0; k <= i; ++k) invr[j][k] -= invr[i][k] * tmp;
-      for (int k = i; k < n; ++k) r[j][k] -= r[i][k] * tmp;
-    }
-  }
-
-  for (int i = n - 1; i >= 0; --i) {
-    for (int j = 0; j < i; ++j) {
-      tmp = r[j][i];
-      for (int k = 0; k < n; ++k) invr[j][k] -= invr[i][k] * tmp;
-    }
-  }
 }
 
 double matlab_std(double *x, int x_length) {

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Spectral envelope estimation on the basis of the idea of CheapTrick.
@@ -8,6 +8,7 @@
 
 #include <math.h>
 
+#include "./common.h"
 #include "./constantnumbers.h"
 #include "./matlabfunctions.h"
 
@@ -35,6 +36,8 @@ void SmoothingWithRecovery(double current_f0, int fs, int fft_size,
       cos(2.0 * world::kPi * quefrency * current_f0);
   }
 
+  for (int i = 0; i <= fft_size / 2; ++i)
+    forward_real_fft->waveform[i] = log(forward_real_fft->waveform[i]);
   for (int i = 1; i < fft_size / 2; ++i)
     forward_real_fft->waveform[fft_size - i] = forward_real_fft->waveform[i];
   fft_execute(forward_real_fft->forward_fft);
@@ -54,77 +57,9 @@ void SmoothingWithRecovery(double current_f0, int fs, int fft_size,
 }
 
 //-----------------------------------------------------------------------------
-// SetParametersForLinearSmoothing()
-//-----------------------------------------------------------------------------
-void SetParametersForLinearSmoothing(int boundary, int fft_size, int fs,
-    double current_f0, double *power_spectrum, double *mirroring_spectrum,
-    double *mirroring_segment, double *frequency_axis) {
-  for (int i = 0; i < boundary; ++i)
-    mirroring_spectrum[i] = power_spectrum[boundary - i];
-  for (int i = boundary; i < fft_size / 2 + boundary; ++i)
-    mirroring_spectrum[i] = power_spectrum[i - boundary];
-  for (int i = fft_size / 2 + boundary; i <= fft_size / 2 + boundary * 2; ++i)
-    mirroring_spectrum[i] =
-      power_spectrum[fft_size / 2 - (i - (fft_size / 2 + boundary))];
-
-  mirroring_segment[0] = mirroring_spectrum[0] * fs / fft_size;
-  for (int i = 1; i < fft_size / 2 + boundary * 2 + 1; ++i)
-    mirroring_segment[i] = mirroring_spectrum[i] * fs / fft_size +
-    mirroring_segment[i - 1];
-
-  for (int i = 0; i <= fft_size / 2; ++i)
-    frequency_axis[i] = static_cast<double>(i) / fft_size *
-    fs - current_f0 / 3.0;
-}
-
-//-----------------------------------------------------------------------------
-// LinearSmoothing() carries out the spectral smoothing by rectangular window
-// whose length is 2F0 / 3.
-// Note that the output is "Logarithmic" power spectrum.
-//-----------------------------------------------------------------------------
-void LinearSmoothing(double current_f0, int fs, int fft_size,
-    ForwardRealFFT *forward_real_fft) {
-  int boundary = static_cast<int>(current_f0 * fft_size / fs) + 1;
-
-  // These parameters are set by the other function.
-  double *power_spectrum = forward_real_fft->waveform;
-  double *mirroring_spectrum = new double[fft_size / 2 + boundary * 2 + 1];
-  double *mirroring_segment = new double[fft_size / 2 + boundary * 2 + 1];
-  double *frequency_axis = new double[fft_size / 2 + 1];
-  SetParametersForLinearSmoothing(boundary, fft_size, fs, current_f0,
-      power_spectrum, mirroring_spectrum, mirroring_segment, frequency_axis);
-
-  double *low_levels = new double[fft_size / 2 + 1];
-  double *high_levels = new double[fft_size / 2 + 1];
-  double origin_of_mirroring_axis =
-    -(static_cast<double>(boundary) - 0.5) * fs / fft_size;
-  double discrete_frequency_interval = static_cast<double>(fs) / fft_size;
-
-  interp1Q(origin_of_mirroring_axis, discrete_frequency_interval,
-      mirroring_segment, fft_size / 2 + boundary * 2 + 1, frequency_axis,
-      fft_size / 2 + 1, low_levels);
-
-  for (int i = 0; i <= fft_size / 2; ++i)
-    frequency_axis[i] += 2.0 * current_f0 / 3.0;
-
-  interp1Q(origin_of_mirroring_axis, discrete_frequency_interval,
-      mirroring_segment, fft_size / 2 + boundary * 2 + 1, frequency_axis,
-      fft_size / 2 + 1, high_levels);
-
-  double *smoothed_spectrum = forward_real_fft->waveform;
-  for (int i = 0; i <= fft_size / 2; ++i)
-    smoothed_spectrum[i] =
-      log((high_levels[i] - low_levels[i]) * 1.5 / current_f0);
-
-  delete[] mirroring_spectrum;
-  delete[] mirroring_segment;
-  delete[] frequency_axis;
-  delete[] low_levels;
-  delete[] high_levels;
-}
-
-//-----------------------------------------------------------------------------
-// GetPowerSpectrum() calculates the power_spectrum with DC correction
+// GetPowerSpectrum() calculates the power_spectrum with DC correction.
+// DC stands for Direct Current. In this case, the component from 0 to F0 Hz
+// is corrected.
 //-----------------------------------------------------------------------------
 void GetPowerSpectrum(int fs, double current_f0, int fft_size,
     ForwardRealFFT *forward_real_fft) {
@@ -143,31 +78,13 @@ void GetPowerSpectrum(int fs, double current_f0, int fft_size,
       forward_real_fft->spectrum[i][1] * forward_real_fft->spectrum[i][1];
 
   // DC correction
-  int upper_limit = 1 +
-    static_cast<int>(1.2 * current_f0 * fft_size / fs);
-  double *low_frequency_replica = new double[upper_limit];
-  double *low_frequency_axis = new double[upper_limit];
-
-  for (int i = 0; i < upper_limit; ++i)
-    low_frequency_axis[i] = static_cast<double>(i) * fs / fft_size;
-
-  // Bug fix! 2014/10/11 by M. Morise
-  int upper_limit_replica = 1 + static_cast<int>(current_f0 * fft_size / fs);
-  interp1Q(current_f0 - low_frequency_axis[0],
-      -static_cast<double>(fs) / fft_size, power_spectrum, upper_limit + 1,
-      low_frequency_axis, upper_limit_replica, low_frequency_replica);
-
-  for (int i = 0; i < upper_limit_replica; ++i)
-    power_spectrum[i] += low_frequency_replica[i];
-
-  delete[] low_frequency_replica;
-  delete[] low_frequency_axis;
+  DCCorrection(power_spectrum, current_f0, fs, fft_size, power_spectrum);
 }
 
 //-----------------------------------------------------------------------------
-// SetparametersForGetWindowedWaveform()
+// SetParametersForGetWindowedWaveform()
 //-----------------------------------------------------------------------------
-void SetparametersForGetWindowedWaveform(int half_window_length, int x_length,
+void SetParametersForGetWindowedWaveform(int half_window_length, int x_length,
     double temporal_position, int fs, double current_f0, int *base_index,
     int *index, double *window) {
   for (int i = -half_window_length; i <= half_window_length; ++i)
@@ -190,7 +107,7 @@ void SetparametersForGetWindowedWaveform(int half_window_length, int x_length,
 }
 
 //-----------------------------------------------------------------------------
-// GetWindowedWaveform() windows the waveform by pitch synchronous window
+// GetWindowedWaveform() windows the waveform by F0-adaptive window
 //-----------------------------------------------------------------------------
 void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
     double temporal_position, ForwardRealFFT *forward_real_fft) {
@@ -200,10 +117,10 @@ void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
   int *index = new int[half_window_length * 2 + 1];
   double *window  = new double[half_window_length * 2 + 1];
 
-  SetparametersForGetWindowedWaveform(half_window_length, x_length,
+  SetParametersForGetWindowedWaveform(half_window_length, x_length,
       temporal_position, fs, current_f0, base_index, index, window);
 
-  // Pitch synchronous windowing
+  // F0-adaptive windowing
   double *waveform = forward_real_fft->waveform;
   for (int i = 0; i <= half_window_length * 2; ++i)
     waveform[i] = x[index[i]] * window[i] + randn() * 0.000000000000001;
@@ -226,17 +143,14 @@ void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
 // CheapTrickGeneralBody() calculates a spectral envelope at a temporal
 // position. This function is only used in CheapTrick().
 // Caution:
-//   windowed_waveform, y_spectrum and forward_fft is allocated in advance
-//   to speed up the processing. If you want to develop real-time
-//   application, you should modify this function not to use these arguments
-//   and edit this function.
+//   forward_fft is allocated in advance to speed up the processing.
 //-----------------------------------------------------------------------------
 void CheapTrickGeneralBody(double *x, int x_length, int fs, double current_f0,
     int fft_size, double temporal_position, ForwardRealFFT *forward_real_fft,
     InverseRealFFT *inverse_real_fft, double *spectral_envelope) {
-  // Synchronous windowing
+  // F0-adaptive windowing
   GetWindowedWaveform(x, x_length, fs, current_f0, temporal_position,
-      forward_real_fft);
+    forward_real_fft);
 
   // Calculate power spectrum with DC correction
   // Note: The calculated power spectrum is stored in an array for waveform.
@@ -246,16 +160,16 @@ void CheapTrickGeneralBody(double *x, int x_length, int fs, double current_f0,
   GetPowerSpectrum(fs, current_f0, fft_size, forward_real_fft);
 
   // Smoothing of the power (linear axis)
-  // "work_space->forward_real_fft.waveform" is the power spectrum.
-  LinearSmoothing(current_f0, fs, fft_size, forward_real_fft);
+  // forward_real_fft.waveform is the power spectrum.
+  LinearSmoothing(forward_real_fft->waveform, current_f0 * 2.0 / 3.0,
+      fs, fft_size, forward_real_fft->waveform);
 
-  // Smoothing and spectral recovery on the cepstrum domain.
+  // Smoothing (log axis) and spectral recovery on the cepstrum domain.
   SmoothingWithRecovery(current_f0, fs, fft_size, forward_real_fft,
       inverse_real_fft, spectral_envelope);
 }
 
 }  // namespace
-
 
 DLLEXPORT int GetFFTSizeForCheapTrick(int fs) {
   return static_cast<int>(pow(2.0, 1.0 +
