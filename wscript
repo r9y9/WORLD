@@ -9,6 +9,7 @@ import waflib
 
 subdirs = [
     'src',
+    'example'
 ]
 
 top = '.'

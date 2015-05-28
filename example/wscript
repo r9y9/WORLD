@@ -1,0 +1,9 @@
+def configure(conf):
+    pass
+
+def build(bld):
+    bld.program(
+        source = 'test.cpp',
+        target = 'test',
+	use = ['world'],
+        includes = ['../src'])
