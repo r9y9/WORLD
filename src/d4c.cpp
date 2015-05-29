@@ -277,7 +277,7 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
   double *coarse_aperiodicity = new double[number_of_aperiodicities + 2];
   coarse_aperiodicity[0] = -60.0;
   coarse_aperiodicity[number_of_aperiodicities + 1] = 0.0;
-  double *coarse_frequency_axis = new double[fft_size / 2 + 1];
+  double *coarse_frequency_axis = new double[number_of_aperiodicities + 2];
   for (int i = 0; i <= number_of_aperiodicities; ++i)
     coarse_frequency_axis[i] =
       static_cast<double>(i) * world::kFrequencyInterval;
@@ -301,6 +301,7 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
   }
 
   DestroyForwardRealFFT(&forward_real_fft);
+  delete[] coarse_frequency_axis;
   delete[] coarse_aperiodicity;
   delete[] window;
   delete[] frequency_axis;
