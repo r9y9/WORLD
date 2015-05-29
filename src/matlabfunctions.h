@@ -7,6 +7,12 @@
 
 #include "./common.h"
 
+#include "./dllexport.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //-----------------------------------------------------------------------------
 // fftshift() swaps the left and right halves of input vector.
 // http://www.mathworks.com/help/matlab/ref/fftshift.html
@@ -52,7 +58,7 @@ void histc(double *x, int x_length, double *edges, int edges_length,
 // Output:
 //   yi         : Interpolated vector
 //-----------------------------------------------------------------------------
-void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
+DLLEXPORT void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
   double *yi);
 
 //-----------------------------------------------------------------------------
@@ -103,7 +109,7 @@ void diff(double *x, int x_length, double *y);
 // Caution:
 //   Length of xi and yi must be the same.
 //-----------------------------------------------------------------------------
-void interp1Q(double x, double shift, double *y, int x_length, double *xi,
+DLLEXPORT void interp1Q(double x, double shift, double *y, int x_length, double *xi,
   int xi_length, double *yi);
 
 //-----------------------------------------------------------------------------
@@ -152,7 +158,7 @@ double matlab_std(double *x, int x_length);
 //   The variable nbit is not used in this function.
 //   This function only supports the 16 bit.
 //-----------------------------------------------------------------------------
-void wavwrite(double *x, int x_length, int fs, int nbit, char *filename);
+DLLEXPORT void wavwrite(double *x, int x_length, int fs, int nbit, char *filename);
 
 //-----------------------------------------------------------------------------
 // wavread() read a .wav file. We cannot recoment to use this function.
@@ -164,6 +170,10 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename);
 // Output:
 //   Output .wav file (double *)
 //-----------------------------------------------------------------------------
-double *wavread(char* filename, int *fs, int *nbit, int *wav_length);
+DLLEXPORT double *wavread(char* filename, int *fs, int *nbit, int *wav_length);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // WORLD_MATLABFUNCTIONS_H_

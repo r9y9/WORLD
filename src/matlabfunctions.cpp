@@ -242,7 +242,7 @@ void histc(double *x, int x_length, double *edges, int edges_length,
   for (i++; i < edges_length; ++i) index[i] = count;
 }
 
-void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
+DLLEXPORT void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
     double *yi) {
   double *h = new double[x_length - 1];
   double *p = new double[xi_length];
@@ -305,7 +305,7 @@ void diff(double *x, int x_length, double *y) {
   for (int i = 0; i < x_length - 1; ++i) y[i] = x[i + 1] - x[i];
 }
 
-void interp1Q(double x, double shift, double *y, int x_length, double *xi,
+DLLEXPORT void interp1Q(double x, double shift, double *y, int x_length, double *xi,
     int xi_length, double *yi) {
   double *xi_fraction = new double[xi_length];
   double *delta_y = new double[x_length];
@@ -400,7 +400,7 @@ double matlab_std(double *x, int x_length) {
   return sqrt(s);
 }
 
-void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
+DLLEXPORT void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
   FILE *fp = fopen(filename, "wb");
   if (fp == NULL) {
     printf("File cannot be opened.\n");
@@ -456,7 +456,7 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
   fclose(fp);
 }
 
-double * wavread(char* filename, int *fs, int *nbit, int *wav_length) {
+DLLEXPORT double * wavread(char* filename, int *fs, int *nbit, int *wav_length) {
   FILE *fp = fopen(filename, "rb");
   if (NULL == fp) {
     printf("File not found.\n");

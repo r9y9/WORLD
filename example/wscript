@@ -5,5 +5,5 @@ def build(bld):
     bld.program(
         source = 'test.cpp',
         target = 'test',
-	use = ['world'],
+        use = ['world'],
         includes = ['../src'])
