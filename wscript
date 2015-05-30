@@ -1,5 +1,5 @@
 APPNAME = 'world'
-VERSION = '0.1.4'
+VERSION = '0.2.0'
 
 from waflib import Options
 import sys
@@ -9,6 +9,7 @@ import waflib
 
 subdirs = [
     'src',
+    'example'
 ]
 
 top = '.'

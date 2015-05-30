@@ -1,9 +1,9 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
-// Voice synthesis based on f0, spectrogram and spectrogram of
-// excitation signal.
+// Voice synthesis based on f0, spectrogram and aperiodicity.
+// forward_real_fft, inverse_real_fft and minimum_phase are used to speed up.
 //-----------------------------------------------------------------------------
 #include "./synthesis.h"
 
@@ -15,55 +15,178 @@
 
 namespace {
 
+void GetNoiseSpectrum(int noise_size, int fft_size,
+    ForwardRealFFT *forward_real_fft) {
+  double average = 0.0;
+  for (int i = 0; i < noise_size; ++i) {
+    forward_real_fft->waveform[i] = randn();
+    average += forward_real_fft->waveform[i];
+  }
+
+  average /= static_cast<double>(noise_size);
+  for (int i = 0; i < noise_size; ++i)
+    forward_real_fft->waveform[i] -= average;
+  for (int i = noise_size; i < fft_size; ++i)
+    forward_real_fft->waveform[i] = 0.0;
+  fft_execute(forward_real_fft->forward_fft);
+}
+
 //-----------------------------------------------------------------------------
-// GetOneFrameSegment() calculates a glottal vibration based on the spectral
-// envelope and excitation signal.
-// Caution:
-//   minimum_phase and inverse_real_fft are allocated in advance. This is for
-//   the rapid processing because set of FFT requires much computational cost.
+// GetAperiodicResponse() calculates an aperiodic response.
 //-----------------------------------------------------------------------------
-void GetOneFrameSegment(double *f0, double **spectrogram,
-    double **residual_spectrogram, int fft_size, int current_frame,
-    MinimumPhaseAnalysis *minimum_phase, InverseRealFFT *inverse_real_fft,
-    double *y) {
-  for (int i = 0; i <= fft_size / 2; ++i)
-    minimum_phase->log_spectrum[i] =
-    log(spectrogram[current_frame][i]) / 2.0;
+void GetAperiodicResponse(int noise_size, int fft_size,
+    double *spectrum, double *aperiodic_ratio, double current_vuv,
+    ForwardRealFFT *forward_real_fft,
+    InverseRealFFT *inverse_real_fft, MinimumPhaseAnalysis *minimum_phase,
+    double *aperiodic_response) {
+  GetNoiseSpectrum(noise_size, fft_size, forward_real_fft);
+
+  if (current_vuv != 0.0) {
+    for (int i = 0; i <= minimum_phase->fft_size / 2; ++i)
+      minimum_phase->log_spectrum[i] =
+        log(spectrum[i] * aperiodic_ratio[i]) / 2.0;
+  } else {
+    for (int i = 0; i <= minimum_phase->fft_size / 2; ++i)
+      minimum_phase->log_spectrum[i] = log(spectrum[i]) / 2.0;
+  }
   GetMinimumPhaseSpectrum(minimum_phase);
 
-  inverse_real_fft->spectrum[0][0] =
-    minimum_phase->minimum_phase_spectrum[0][0] *
-    residual_spectrogram[current_frame][0];
-  inverse_real_fft->spectrum[0][1] = 0.0;
+  for (int i = 0; i <= fft_size / 2; ++i) {
+    inverse_real_fft->spectrum[i][0] =
+      minimum_phase->minimum_phase_spectrum[i][0];
+    inverse_real_fft->spectrum[i][1] =
+      minimum_phase->minimum_phase_spectrum[i][1];
 
-  for (int i = 1; i < fft_size / 2; ++i) {
     inverse_real_fft->spectrum[i][0] =
       minimum_phase->minimum_phase_spectrum[i][0] *
-      residual_spectrogram[current_frame][(i - 1) * 2 + 1] -
+      forward_real_fft->spectrum[i][0] -
       minimum_phase->minimum_phase_spectrum[i][1] *
-      residual_spectrogram[current_frame][i * 2];
+      forward_real_fft->spectrum[i][1];
     inverse_real_fft->spectrum[i][1] =
       minimum_phase->minimum_phase_spectrum[i][0] *
-      residual_spectrogram[current_frame][i * 2] +
+      forward_real_fft->spectrum[i][1] +
       minimum_phase->minimum_phase_spectrum[i][1] *
-      residual_spectrogram[current_frame][(i - 1) * 2 + 1];
+      forward_real_fft->spectrum[i][0];
   }
-  inverse_real_fft->spectrum[fft_size / 2][0] =
-    minimum_phase->minimum_phase_spectrum[fft_size / 2][0] *
-    residual_spectrogram[current_frame][fft_size - 1];
-  inverse_real_fft->spectrum[fft_size / 2][1] = 0;
-
   fft_execute(inverse_real_fft->inverse_fft);
+  fftshift(inverse_real_fft->waveform, fft_size, aperiodic_response);
+}
 
+//-----------------------------------------------------------------------------
+// GetPeriodicResponse() calculates an aperiodic response.
+//-----------------------------------------------------------------------------
+void GetPeriodicResponse(int fft_size, double *spectrum,
+    double *aperiodic_ratio, double current_vuv,
+    InverseRealFFT *inverse_real_fft, MinimumPhaseAnalysis *minimum_phase,
+    double *periodic_response) {
+  if (current_vuv <= 0.5) {
+    for (int i = 0; i < fft_size; ++i) periodic_response[i] = 0.0;
+    return;
+  }
+
+  for (int i = 0; i <= minimum_phase->fft_size / 2; ++i)
+    minimum_phase->log_spectrum[i] =
+      log(spectrum[i] * (1.0 - aperiodic_ratio[i]) +
+      world::kMySafeGuardMinimum) / 2.0;
+  GetMinimumPhaseSpectrum(minimum_phase);
+
+  for (int i = 0; i <= fft_size / 2; ++i) {
+    inverse_real_fft->spectrum[i][0] =
+      minimum_phase->minimum_phase_spectrum[i][0];
+    inverse_real_fft->spectrum[i][1] =
+      minimum_phase->minimum_phase_spectrum[i][1];
+  }
+  fft_execute(inverse_real_fft->inverse_fft);
+  fftshift(inverse_real_fft->waveform, fft_size, periodic_response);
+}
+
+void GetSpectralEnvelope(double current_time, double frame_period,
+    int f0_length, double **spectrogram, int fft_size,
+    double *spectral_envelope) {
+  int current_frame_floor =
+    MyMin(f0_length - 1, static_cast<int>(floor(current_time / frame_period)));
+  int current_frame_ceil =
+    MyMin(f0_length - 1, static_cast<int>(ceil(current_time / frame_period)));
+  double interpolation = current_time / frame_period - current_frame_floor;
+
+  if (current_frame_floor == current_frame_ceil) {
+    for (int i = 0; i <= fft_size / 2; ++i)
+      spectral_envelope[i] = spectrogram[current_frame_floor][i];
+  } else {
+    for (int i = 0; i <= fft_size / 2; ++i)
+      spectral_envelope[i] =
+        (1.0 - interpolation) * spectrogram[current_frame_floor][i] +
+        interpolation * spectrogram[current_frame_ceil][i];
+  }
+}
+
+void GetAperiodicRatio(double current_time, double frame_period,
+    int f0_length, double **aperiodicity, int fft_size,
+    double *aperiodic_spectrum) {
+  int current_frame_floor =
+    MyMin(f0_length - 1, static_cast<int>(floor(current_time / frame_period)));
+  int current_frame_ceil =
+    MyMin(f0_length - 1, static_cast<int>(ceil(current_time / frame_period)));
+  double interpolation = current_time / frame_period - current_frame_floor;
+
+  if (current_frame_floor == current_frame_ceil) {
+    for (int i = 0; i <= fft_size / 2; ++i)
+      aperiodic_spectrum[i] =
+        pow(aperiodicity[current_frame_floor][i], 2.0);
+  } else {
+    for (int i = 0; i <= fft_size / 2; ++i)
+      aperiodic_spectrum[i] =
+        pow((1.0 - interpolation) * aperiodicity[current_frame_floor][i] +
+        interpolation * aperiodicity[current_frame_ceil][i], 2.0);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// GetOneFrameSegment() calculates a periodic and aperiodic response at a time.
+//-----------------------------------------------------------------------------
+void GetOneFrameSegment(double current_vuv, int noise_size,
+    double **spectrogram, int fft_size, double **aperiodicity, int f0_length,
+    double frame_period, double current_time, int fs,
+    ForwardRealFFT *forward_real_fft, InverseRealFFT *inverse_real_fft,
+    MinimumPhaseAnalysis *minimum_phase, double *response) {
+  double *aperiodic_response = new double[fft_size];
+  double *periodic_response = new double[fft_size];
+
+  double *spectral_envelope = new double[fft_size];
+  double *aperiodic_ratio = new double[fft_size];
+  GetSpectralEnvelope(current_time, frame_period, f0_length, spectrogram,
+      fft_size, spectral_envelope);
+  GetAperiodicRatio(current_time, frame_period, f0_length, aperiodicity,
+      fft_size, aperiodic_ratio);
+
+  // Synthesis of the periodic response
+  GetPeriodicResponse(fft_size, spectral_envelope, aperiodic_ratio,
+    current_vuv, inverse_real_fft, minimum_phase, periodic_response);
+
+  // Synthesis of the aperiodic response
+  GetAperiodicResponse(noise_size, fft_size, spectral_envelope,
+      aperiodic_ratio, current_vuv, forward_real_fft,
+      inverse_real_fft, minimum_phase, aperiodic_response);
+
+  double sqrt_noise_size = sqrt(static_cast<double>(noise_size));
   for (int i = 0; i < fft_size; ++i)
-    y[i] = inverse_real_fft->waveform[i] / fft_size;
+    response[i] =
+      (periodic_response[i] * sqrt_noise_size + aperiodic_response[i]) /
+      fft_size;
+
+  delete[] spectral_envelope;
+  delete[] aperiodic_ratio;
+  delete[] periodic_response;
+  delete[] aperiodic_response;
 }
 
 void GetTemporalParametersForTimeBase(double *f0, int f0_length, int fs,
     int y_length, double frame_period, double *time_axis,
-    double *coarse_f0, double *coarse_vuv) {
+    double *coarse_time_axis, double *coarse_f0, double *coarse_vuv) {
   for (int i = 0; i < y_length; ++i)
     time_axis[i] = i / static_cast<double>(fs);
+  for (int i = 0; i < f0_length + 1; ++i)
+    coarse_time_axis[i] = i * frame_period;
   for (int i = 0; i < f0_length + 1; ++i)
     coarse_f0[i] = f0[i];
   coarse_f0[f0_length] = coarse_f0[f0_length - 1] * 2 -
@@ -76,7 +199,8 @@ void GetTemporalParametersForTimeBase(double *f0, int f0_length, int fs,
 
 
 int GetPulseLocationsForTimeBase(double *interpolated_f0, double *time_axis,
-    int y_length, int fs, double *pulse_locations, double *fractional_index) {
+    int y_length, int fs, double *pulse_locations,
+    int *pulse_locations_index) {
 
   double *total_phase = new double[y_length];
   total_phase[0] = 2.0 * world::kPi * interpolated_f0[0] / fs;
@@ -92,21 +216,16 @@ int GetPulseLocationsForTimeBase(double *interpolated_f0, double *time_axis,
   for (int i = 0; i < y_length - 1; ++i)
     wrap_phase_abs[i] = fabs(wrap_phase[i + 1] - wrap_phase[i]);
 
-  int *tmp_index = new int[y_length];
   int number_of_pulses = 0;
   for (int i = 0; i < y_length - 1; ++i) {
     if (wrap_phase_abs[i] > world::kPi) {
-      tmp_index[number_of_pulses] = i;
-      pulse_locations[number_of_pulses++] = time_axis[i];
+      pulse_locations[number_of_pulses] = time_axis[i];
+      pulse_locations_index[number_of_pulses] = static_cast<int>
+        (matlab_round(pulse_locations[number_of_pulses] * fs));
+      ++number_of_pulses;
     }
   }
 
-  for (int i = 0; i < number_of_pulses; ++i)
-    fractional_index[i] =
-      (fmod(total_phase[tmp_index[i]], world::kPi) - world::kPi) /
-      (2.0 * world::kPi * interpolated_f0[tmp_index[i]] / fs);
-
-  delete[] tmp_index;
   delete[] wrap_phase_abs;
   delete[] wrap_phase;
   delete[] total_phase;
@@ -116,33 +235,33 @@ int GetPulseLocationsForTimeBase(double *interpolated_f0, double *time_axis,
 
 int GetTimeBase(double *f0, int f0_length, int fs,
     double frame_period, int y_length, double *pulse_locations,
-    double *fractional_index) {
+    int *pulse_locations_index, double *interpolated_vuv) {
   double *time_axis = new double[y_length];
+  double *coarse_time_axis = new double[f0_length + 1];
   double *coarse_f0 = new double[f0_length + 1];
   double *coarse_vuv = new double[f0_length + 1];
-  double *interpolated_vuv = new double[y_length];
-  double *interpolated_f0 = new double[y_length];
   GetTemporalParametersForTimeBase(f0, f0_length, fs, y_length, frame_period,
-      time_axis, coarse_f0, coarse_vuv);
+      time_axis, coarse_time_axis, coarse_f0, coarse_vuv);
 
-  interp1Q(0.0, frame_period, coarse_f0, f0_length + 1,
+  double *interpolated_f0 = new double[y_length];
+  interp1(coarse_time_axis, coarse_f0, f0_length + 1,
       time_axis, y_length, interpolated_f0);
-  interp1Q(0.0, frame_period, coarse_vuv, f0_length + 1,
+  interp1(coarse_time_axis, coarse_vuv, f0_length + 1,
       time_axis, y_length, interpolated_vuv);
   for (int i = 0; i < y_length; ++i)
     interpolated_vuv[i] = interpolated_vuv[i] > 0.5 ? 1.0 : 0.0;
 
   for (int i = 0; i < y_length; ++i)
-    interpolated_f0[i] = interpolated_vuv[i] ==
-      0.0 ? world::kDefaultF0ForSynthesis : interpolated_f0[i];
+    interpolated_f0[i] =
+      interpolated_vuv[i] == 0.0 ? world::kDefaultF0 : interpolated_f0[i];
 
   int number_of_pulses = GetPulseLocationsForTimeBase(interpolated_f0,
-      time_axis, y_length, fs, pulse_locations, fractional_index);
+      time_axis, y_length, fs, pulse_locations, pulse_locations_index);
 
-  delete[] time_axis;
-  delete[] coarse_f0;
   delete[] coarse_vuv;
-  delete[] interpolated_vuv;
+  delete[] coarse_f0;
+  delete[] coarse_time_axis;
+  delete[] time_axis;
   delete[] interpolated_f0;
 
   return number_of_pulses;
@@ -151,42 +270,53 @@ int GetTimeBase(double *f0, int f0_length, int fs,
 }  // namespace
 
 DLLEXPORT void Synthesis(double *f0, int f0_length, double **spectrogram,
-    double **residual_spectrogram, int fft_size, double frame_period,
-    int fs, int y_length, double *y) {
+    double **aperiodicity, int fft_size, double frame_period, int fs,
+    int y_length, double *y) {
   double *impulse_response = new double[fft_size];
+
   for (int i = 0; i < y_length; ++i) y[i] = 0.0;
 
   MinimumPhaseAnalysis minimum_phase = {0};
   InitializeMinimumPhaseAnalysis(fft_size, &minimum_phase);
   InverseRealFFT inverse_real_fft = {0};
   InitializeInverseRealFFT(fft_size, &inverse_real_fft);
+  ForwardRealFFT forward_real_fft = {0};
+  InitializeForwardRealFFT(fft_size, &forward_real_fft);
 
   double *pulse_locations = new double[y_length];
-  // fractional_index is for the future version of WORLD.s
-  // This version does not use it.
-  double *fractional_index = new double[y_length];
+  int *pulse_locations_index = new int[y_length];
+  double *interpolated_vuv = new double[y_length];
   int number_of_pulses = GetTimeBase(f0, f0_length, fs, frame_period / 1000.0,
-      y_length, pulse_locations, fractional_index);
+      y_length, pulse_locations, pulse_locations_index,
+      interpolated_vuv);
 
-  // Length used for the synthesis is unclear.
-  const int kFrameLength = fft_size / 2;
+  frame_period /= 1000.0;
+  int noise_size;
 
-  int pulse_index;
   for (int i = 0; i < number_of_pulses; ++i) {
-    pulse_index = matlab_round(pulse_locations[i] * fs);
+    noise_size = pulse_locations_index[MyMin(number_of_pulses - 1, i + 1)] -
+      pulse_locations_index[i];
 
-    GetOneFrameSegment(f0, spectrogram, residual_spectrogram, fft_size,
-        static_cast<int>(pulse_locations[i] / frame_period * 1000.0),
-        &minimum_phase, &inverse_real_fft, impulse_response);
+    GetOneFrameSegment(interpolated_vuv[pulse_locations_index[i]], noise_size,
+        spectrogram, fft_size, aperiodicity, f0_length, frame_period,
+        pulse_locations[i], fs, &forward_real_fft, &inverse_real_fft,
+        &minimum_phase, impulse_response);
 
-    for (int i = pulse_index;
-        i < MyMin(pulse_index + kFrameLength, y_length - 1); ++i)
-      y[i] += impulse_response[i - pulse_index];
+    int index = 0;
+    for (int j = 0; j < fft_size; ++j) {
+      index = MyMin(y_length - 1,
+        MyMax(0, j + pulse_locations_index[i] - fft_size / 2 + 1));
+        y[index] += impulse_response[j];
+    }
   }
+
+  delete[] pulse_locations;
+  delete[] pulse_locations_index;
+  delete[] interpolated_vuv;
 
   DestroyMinimumPhaseAnalysis(&minimum_phase);
   DestroyInverseRealFFT(&inverse_real_fft);
+  DestroyForwardRealFFT(&forward_real_fft);
+
   delete[] impulse_response;
-  delete[] pulse_locations;
-  delete[] fractional_index;
 }

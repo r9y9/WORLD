@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //-----------------------------------------------------------------------------
 #ifndef WORLD_CHEAPTRICK_H_
@@ -20,8 +20,9 @@ extern "C" {
 //   fs           : Sampling frequency
 //   time_axis    : Time axis
 //   f0           : F0 contour
+//   f0_length    : Length of F0 contour
 // Output:
-//   spectrogram  : Spectrogram estimated by STAR.
+//   spectrogram  : Spectrogram estimated by CheapTrick.
 //-----------------------------------------------------------------------------
 DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
   double *f0, int f0_length, double **spectrogram);

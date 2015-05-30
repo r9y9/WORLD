@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 #ifndef WORLD_COMMON_H_
 #define WORLD_COMMON_H_
@@ -62,6 +62,19 @@ inline int MyMin(int x, int y) {
 inline double MyMin(double x, double y) {
   return x < y ? x : y;
 }
+
+//-----------------------------------------------------------------------------
+// These functions are used in at least two different .cpp files
+// DCCorrection is used in CheapTrick() and D4C().
+void DCCorrection(double *input, double current_f0, int fs, int fft_size,
+    double *output);
+
+// LinearSmoothing is used in CheapTrick() and D4C().
+void LinearSmoothing(double *input, double width, int fs, int fft_size,
+    double *output);
+
+// NuttallWindow is used in Dio() and D4C().
+void NuttallWindow(int y_length, double *y);
 
 //-----------------------------------------------------------------------------
 // These functions are used to speed up the processing.

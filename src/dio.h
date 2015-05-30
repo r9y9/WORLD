@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 //-----------------------------------------------------------------------------
@@ -24,24 +24,7 @@ typedef struct {
 } DioOption;
 
 //-----------------------------------------------------------------------------
-// DIO (version 0.1.0)
-// You can only change the parameter "frame_period". If you want to change
-// other parameters, you should use latest Dio().
-// This version will be destroyed in the future.
-// Input:
-//   x              : Input signal
-//   x_length       : Length of x
-//   fs             : Sampling frequency
-//   frame_period   :
-// Output:
-//   time_axis      : Temporal positions.
-//   f0             : F0 contour.
-//-----------------------------------------------------------------------------
-DLLEXPORT void DioOld(double *x, int x_length, int fs, double frame_period,
-  double *time_axis, double *f0);
-
-//-----------------------------------------------------------------------------
-// DIO (vertion 0.1.1)
+// DIO
 // Input:
 //   x          : Input signal
 //   x_length   : Length of x
@@ -53,6 +36,7 @@ DLLEXPORT void DioOld(double *x, int x_length, int fs, double frame_period,
 //-----------------------------------------------------------------------------
 DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
   double *time_axis, double *f0);
+
 
 // This function is basically same as Dio but different in argument type:
 // `const DioOption` -> `const DioOption*`

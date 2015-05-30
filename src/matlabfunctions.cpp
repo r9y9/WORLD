@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // Matlab functions implemented for WORLD
@@ -21,7 +21,9 @@
 
 #include "./constantnumbers.h"
 
+#if (defined (__WIN32__) || defined (_WIN32)) && !defined (__MINGW32__)
 #pragma warning(disable : 4996)
+#endif
 
 namespace {
 //-----------------------------------------------------------------------------
@@ -240,7 +242,7 @@ void histc(double *x, int x_length, double *edges, int edges_length,
   for (i++; i < edges_length; ++i) index[i] = count;
 }
 
-void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
+DLLEXPORT void interp1(double *x, double *y, int x_length, double *xi, int xi_length,
     double *yi) {
   double *h = new double[x_length - 1];
   double *p = new double[xi_length];
@@ -303,7 +305,7 @@ void diff(double *x, int x_length, double *y) {
   for (int i = 0; i < x_length - 1; ++i) y[i] = x[i + 1] - x[i];
 }
 
-void interp1Q(double x, double shift, double *y, int x_length, double *xi,
+DLLEXPORT void interp1Q(double x, double shift, double *y, int x_length, double *xi,
     int xi_length, double *yi) {
   double *xi_fraction = new double[xi_length];
   double *delta_y = new double[x_length];
@@ -386,32 +388,6 @@ void fast_fftfilt(double *x, int x_length, double *h, int h_length,
   delete[] x_spectrum;
 }
 
-void inv(double **r, int n, double **invr) {
-  for (int i = 0; i < n; ++i)
-    for (int j = 0; j < n; ++j) invr[i][j] = 0.0;
-  for (int i = 0; i < n; ++i) invr[i][i] = 1.0;
-
-  double tmp;
-  for (int i = 0; i < n; ++i) {
-    tmp = r[i][i];
-    r[i][i] = 1.0;
-    for (int j = 0; j <= i; ++j) invr[i][j] /= tmp;
-    for (int j = i + 1; j < n; ++j) r[i][j] /= tmp;
-    for (int j = i + 1; j < n; ++j) {
-      tmp = r[j][i];
-      for (int k = 0; k <= i; ++k) invr[j][k] -= invr[i][k] * tmp;
-      for (int k = i; k < n; ++k) r[j][k] -= r[i][k] * tmp;
-    }
-  }
-
-  for (int i = n - 1; i >= 0; --i) {
-    for (int j = 0; j < i; ++j) {
-      tmp = r[j][i];
-      for (int k = 0; k < n; ++k) invr[j][k] -= invr[i][k] * tmp;
-    }
-  }
-}
-
 double matlab_std(double *x, int x_length) {
   double average = 0.0;
   for (int i = 0; i < x_length; ++i) average += x[i];
@@ -424,7 +400,7 @@ double matlab_std(double *x, int x_length) {
   return sqrt(s);
 }
 
-void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
+DLLEXPORT void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
   FILE *fp = fopen(filename, "wb");
   if (fp == NULL) {
     printf("File cannot be opened.\n");
@@ -480,7 +456,7 @@ void wavwrite(double *x, int x_length, int fs, int nbit, char *filename) {
   fclose(fp);
 }
 
-double * wavread(char* filename, int *fs, int *nbit, int *wav_length) {
+DLLEXPORT double * wavread(char* filename, int *fs, int *nbit, int *wav_length) {
   FILE *fp = fopen(filename, "rb");
   if (NULL == fp) {
     printf("File not found.\n");

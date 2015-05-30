@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// Copyright 2012-2014 Masanori Morise. All Rights Reserved.
+// Copyright 2012-2015 Masanori Morise. All Rights Reserved.
 // Author: mmorise [at] yamanashi.ac.jp (Masanori Morise)
 //
 // F0 estimation based on DIO (Distributed Inline-filter Operation).
@@ -8,6 +8,7 @@
 
 #include <math.h>
 
+#include "./common.h"
 #include "./constantnumbers.h"
 #include "./matlabfunctions.h"
 
@@ -279,20 +280,6 @@ void FixF0Contour(double frame_period, int number_of_candidates,
   delete[] f0_tmp2;
   delete[] positive_index;
   delete[] negative_index;
-}
-
-//-----------------------------------------------------------------------------
-// NuttallWindow() calculates the coefficients of Nuttall window whose length
-// is y_length.
-//-----------------------------------------------------------------------------
-void NuttallWindow(int y_length, double *y) {
-  double tmp;
-  for (int i = 0; i < y_length; ++i) {
-    tmp  = (i + 1 - (y_length + 1) / 2.0) / (y_length + 1);
-    y[i] = 0.355768 + 0.487396 * cos(2 * world::kPi * tmp) +
-      0.144232 * cos(4.0 * world::kPi * tmp) +
-      0.012604 * cos(6.0 * world::kPi * tmp);
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -579,9 +566,10 @@ void GetF0CandidateAndStabilityMap(double *boundary_f0_list,
 }
 
 //-----------------------------------------------------------------------------
-// OriginalDio() estimates the F0 based on Distributed Inline-filter Operation.
+// DioGeneralBody() estimates the F0 based on Distributed Inline-filter
+// Operation.
 //-----------------------------------------------------------------------------
-void OriginalDio(double *x, int x_length, int fs, double frame_period,
+void DioGeneralBody(double *x, int x_length, int fs, double frame_period,
     double f0_floor, double f0_ceil, double channels_in_octave, int speed,
     double *time_axis, double *f0) {
   int number_of_bands = 2 + static_cast<int>(log(f0_ceil / f0_floor) /
@@ -647,7 +635,7 @@ DLLEXPORT int GetSamplesForDIO(int fs, int x_length, double frame_period) {
 
 DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
     double *time_axis, double *f0) {
-  OriginalDio(x, x_length, fs, option.frame_period, option.f0_floor,
+  DioGeneralBody(x, x_length, fs, option.frame_period, option.f0_floor,
       option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);
 }
 
@@ -656,27 +644,14 @@ DLLEXPORT void DioByOptPtr(double *x, int x_length, int fs, const DioOption* opt
   Dio(x, x_length, fs, *option, time_axis, f0);
 }
 
-DLLEXPORT void DioOld(double *x, int x_length, int fs, double frame_period,
-    double *time_axis, double *f0) {
-  const double kTargetFs = 4000.0;
-  const double kF0Floor = 80.0;
-  const double kF0Ceil = 640.0;
-  const double kChannelsInOctave = 2.0;
-  const int kDecimationRatio = static_cast<int>(fs / kTargetFs);
-
-  OriginalDio(x, x_length, fs, frame_period, kF0Floor, kF0Ceil,
-      kChannelsInOctave, kDecimationRatio, time_axis, f0);
-}
-
 DLLEXPORT void InitializeDioOption(DioOption *option) {
   // You can change default parameters.
   option->channels_in_octave = 2.0;
-  option->f0_ceil = 640.0;
-  option->f0_floor = 80.0;
+  option->f0_ceil = world::kCeilF0;
+  option->f0_floor = world::kFloorF0;
   option->frame_period = 5;
-
-  // You can use from 1 to 12.
-  // Default value is for the fs of 44.1 kHz.
+  // You can use the value from 1 to 12.
+  // Default value 11 is for the fs of 44.1 kHz.
   // The lower value you use, the better performance you can obtain.
   option->speed = 11;
 }
