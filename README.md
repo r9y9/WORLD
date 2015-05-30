@@ -25,7 +25,6 @@ This version of WORLD is used by the following bindings:
 ## Changes from the original WORLD
 
 - Add `extern C` in header files
-- Change name of old interface `Dio` -> `DioOld`
 - Add `DioByOptPtr` (for calling from Julia that doesn't support struct-passing by value)
 - Integrate waf
 - Support pkg-config
