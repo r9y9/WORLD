@@ -64,7 +64,7 @@ void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
 
   // F0-adaptive windowing
   for (int i = 0; i <= half_window_length * 2; ++i)
-    waveform[i] = x[index[i]] * window[i] + randn() * 0.000000000000001;
+    waveform[i] = x[index[i]] * window[i] + randn() * world::kMySafeGuardMinimum;
 
   double tmp_weight1 = 0;
   double tmp_weight2 = 0;
@@ -288,9 +288,10 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
     frequency_axis[i] = static_cast<double>(i) * fs / fft_size;
   for (int i = 0; i < f0_length; ++i) {
     if (f0[i] == 0) continue;
-    D4CGeneralBody(x, x_length, fs, f0[i], fft_size_d4c, time_axis[i],
-        number_of_aperiodicities, window, window_length, &forward_real_fft,
-        &coarse_aperiodicity[1]);
+//    D4CGeneralBody(x, x_length, fs, f0[i], fft_size_d4c, time_axis[i],
+    D4CGeneralBody(x, x_length, fs, MyMax(f0[i], world::kFloorF0),
+        fft_size_d4c, time_axis[i], number_of_aperiodicities, window,
+        window_length, &forward_real_fft, &coarse_aperiodicity[1]);
     // Linear interpolation to convert the coarse aperiodicity into its
     // spectral representation.
     interp1(coarse_frequency_axis, coarse_aperiodicity,
