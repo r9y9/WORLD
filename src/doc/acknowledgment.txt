@@ -1,5 +1,5 @@
 If you permit me to write your e-mail address in this document,
-please contact me via e-mail (morise@fc.ritsumei.ac.jp).
+please contact me via e-mail (mmorise@yamanashi.ac.jp).
 
 Dear Ying-Chun Liu (PaulLiu): 
 He implemented the WORLD for GNU/Linux.
@@ -20,5 +20,8 @@ Dear Ackie:
 He/She used WORLD as the plug-in for software, VocalShifter.
 Several technical comments were also given by him/her.
 http://ackiesound.ifdef.jp/index.html
+
+Dear @r9y9 (Ryuichi Yamamoto):
+He gave me a bug report in WORLD 0.2.0.
 
 And all users.

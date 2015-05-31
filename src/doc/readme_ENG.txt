@@ -27,5 +27,5 @@ This information is crucial to obtain a grant to develop WORLD.
 
 4. Contacts
 WORLD was written by Masanori Morise.
-You can contact him via e-mail (mmorise@yamanashi.ac.jp)
+You can contact him via e-mail (mmorise [at] yamanashi.ac.jp)
 or Twitter: @m_morise
