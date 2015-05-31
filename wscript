@@ -27,9 +27,8 @@ def configure(conf):
     conf.env['VERSION'] = VERSION
     conf.env['APPNAME'] = APPNAME
 
-    ver = conf.env.CC_VERSION
     if conf.env.COMPILER_CXX != 'msvc':
-        conf.env.append_unique('CXXFLAGS', ['-O2', '-Wall', '-g'])
+        conf.env.append_unique('CXXFLAGS', ['-O2', '-Wall'])
     conf.env.HPREFIX = conf.env.PREFIX + '/include/world'
     conf.recurse(subdirs)
 
