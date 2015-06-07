@@ -9,7 +9,7 @@ This version of WORLD is used by the following bindings:
 
 - [r9y9/WORLD.jl](https://github.com/r9y9/WORLD.jl)
 - [r9y9/go-world](https://github.com/r9y9/go-world)
-- [jimsotelo/world.py](https://github.com/jimsotelo/world.py)
+- [sotelo/world.py](https://github.com/sotelo/world.py)
 
 ## Supported Platforms
 
