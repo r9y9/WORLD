@@ -21,6 +21,7 @@ typedef struct {
   double channels_in_octave;
   double frame_period;  // msec
   int speed;  // (1, 2, ..., 12)
+  double allowed_range;  // Threshold used for fixing the F0 contour.
 } DioOption;
 
 //-----------------------------------------------------------------------------
