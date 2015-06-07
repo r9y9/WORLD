@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+// http://semver.org/
 DLLEXPORT const char* GetWORLDVersion(void);
 
 #ifdef __cplusplus
