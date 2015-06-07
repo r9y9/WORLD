@@ -252,12 +252,11 @@ void FixStep4(double *f0_step3, int f0_length, double **f0_candidates,
 //-----------------------------------------------------------------------------
 void FixF0Contour(double frame_period, int number_of_candidates,
     int fs, double **f0_candidates, double *best_f0_contour, int f0_length,
-    double f0_floor, double *fixed_f0_contour) {
+    double f0_floor, double allowed_range, double *fixed_f0_contour) {
   // memo:
   // These are the tentative values. Optimization should be required.
   int voice_range_minimum =
     static_cast<int>(0.5 + 1000.0 / frame_period / f0_floor) * 2 + 1;
-  double allowed_range = 0.02 * frame_period;
 
   double *f0_tmp1 = new double[f0_length];
   double *f0_tmp2 = new double[f0_length];
@@ -571,7 +570,7 @@ void GetF0CandidateAndStabilityMap(double *boundary_f0_list,
 //-----------------------------------------------------------------------------
 void DioGeneralBody(double *x, int x_length, int fs, double frame_period,
     double f0_floor, double f0_ceil, double channels_in_octave, int speed,
-    double *time_axis, double *f0) {
+    double allowed_range, double *time_axis, double *f0) {
   int number_of_bands = 2 + static_cast<int>(log(f0_ceil / f0_floor) /
     world::kLog2 * channels_in_octave);
   double * boundary_f0_list = new double[number_of_bands];
@@ -613,7 +612,7 @@ void DioGeneralBody(double *x, int x_length, int fs, double frame_period,
 
   // Postprocessing to find the best f0-contour.
   FixF0Contour(frame_period, number_of_bands, fs, f0_candidate_map,
-      best_f0_contour, f0_length, f0_floor, f0);
+      best_f0_contour, f0_length, f0_floor, allowed_range, f0);
 
   delete[] best_f0_contour;
   delete[] y_spectrum;
@@ -636,7 +635,8 @@ DLLEXPORT int GetSamplesForDIO(int fs, int x_length, double frame_period) {
 DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
     double *time_axis, double *f0) {
   DioGeneralBody(x, x_length, fs, option.frame_period, option.f0_floor,
-      option.f0_ceil, option.channels_in_octave, option.speed, time_axis, f0);
+      option.f0_ceil, option.channels_in_octave, option.speed,
+      option.allowed_range, time_axis, f0);
 }
 
 DLLEXPORT void DioByOptPtr(double *x, int x_length, int fs, const DioOption* option,
@@ -653,5 +653,9 @@ DLLEXPORT void InitializeDioOption(DioOption *option) {
   // You can use the value from 1 to 12.
   // Default value 11 is for the fs of 44.1 kHz.
   // The lower value you use, the better performance you can obtain.
-  option->speed = 11;
+  option->speed = 1;
+  // You can give a positive real number as the threshold.
+  // The most strict value is 0, and there is no upper limit.
+  // On the other hand, I think that the value from 0.02 to 0.2 is reasonable.
+  option->allowed_range = 0.02;
 }

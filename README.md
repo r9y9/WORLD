@@ -28,3 +28,6 @@ This version of WORLD is used by the following bindings:
 - Add `DioByOptPtr` (for calling from Julia that doesn't support struct-passing by value)
 - Integrate waf
 - Support pkg-config
+- Add `GetWORLDVersion` function [#4]
+
+[#4]: https://github.com/r9y9/WORLD/pull/4
