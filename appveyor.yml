@@ -24,3 +24,7 @@ build_script:
       ./waf configure --check-cxx-compiler=g++;
       ./waf
       "
+
+artifacts:
+  - path: '**\*.dll'
+    name: WORLD
