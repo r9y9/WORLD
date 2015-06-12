@@ -1,11 +1,17 @@
 environment:
+  PYTHON: "C:/Python27"
   matrix:
-    - PYTHON: "C:/Python27"
+  - ARCH: "i686"
+  - ARCH: "x86_64"
 
 init:
   - "ECHO %PYTHON%"
   - ps: "ls C:/Python*"
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+cache:
+  - mingw-w32-bin-i686-20140102.7z
+  - mingw-w64-bin-x86_64-20140102.7z
 
 skip_commits:
 # Add [av skip] to commit messages for docfixes, etc to reduce load on queue
@@ -18,12 +24,7 @@ notifications:
     on_build_status_changed: false
 
 build_script:
-  - C:\MinGW\msys\1.0\bin\sh --login -c "
-      echo 'C:\MinGW\ /MinGW' > /etc/fstab;
-      cd /c/projects/world;
-      ./waf configure --check-cxx-compiler=g++;
-      ./waf
-      "
+  - C:\MinGW\msys\1.0\bin\sh --login /c/projects/world/msys_build.sh
 
 artifacts:
   - path: '**\*.dll'
