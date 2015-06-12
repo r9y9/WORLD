@@ -21,6 +21,6 @@ build_script:
   - C:\MinGW\msys\1.0\bin\sh --login -c "
       echo 'C:\MinGW\ /MinGW' > /etc/fstab;
       cd /c/projects/world;
-      ./waf configure;
+      ./waf configure --check-cxx-compiler=g++;
       ./waf
       "
