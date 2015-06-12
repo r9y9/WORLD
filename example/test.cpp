@@ -26,7 +26,7 @@
 #pragma comment(lib, "winmm.lib")
 #pragma warning(disable : 4996)
 #endif
-#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__))
+#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || defined (__MINGW32__))
 #include <sys/time.h>
 #include <stdint.h>
 #endif
@@ -41,7 +41,7 @@
 // Frame shift [msec]
 #define FRAMEPERIOD 5.0
 
-#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__))
+#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || defined (__MINGW32__))
 // Linux porting section: implement timeGetTime() by gettimeofday(),
 #ifndef DWORD
 #define DWORD uint32_t
