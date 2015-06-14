@@ -15,12 +15,20 @@ This version of WORLD is used by the following bindings:
 
 - Linux
 - Mac OS X
-- Windows (MSVC)
+- Windows
 
 ## Installation
 
-     ./waf configure && ./waf
-     sudo ./waf install
+```bash
+./waf configure && ./waf
+sudo ./waf install
+```
+
+**NOTE**: MSVC will be used for compilation on windows by default. If you prefer to use `g++`, use `--check-cxx-compiler` option like:
+
+```bash
+./waf configure --check-cxx-compiler=g++
+```
 
 ## Changes from the original WORLD
 
