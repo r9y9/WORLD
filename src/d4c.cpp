@@ -64,7 +64,8 @@ void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
 
   // F0-adaptive windowing
   for (int i = 0; i <= half_window_length * 2; ++i)
-    waveform[i] = x[index[i]] * window[i] + randn() * world::kMySafeGuardMinimum;
+    waveform[i] =
+      x[index[i]] * window[i] + randn() * world::kMySafeGuardMinimum;
 
   double tmp_weight1 = 0;
   double tmp_weight2 = 0;
@@ -287,7 +288,10 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
   for (int i = 0; i <= fft_size / 2; ++i)
     frequency_axis[i] = static_cast<double>(i) * fs / fft_size;
   for (int i = 0; i < f0_length; ++i) {
-    if (f0[i] == 0) continue;
+    if (f0[i] == 0) {
+      for (int j = 0; j <= fft_size / 2; ++j) aperiodicity[i][j] = 0.0;
+      continue;
+    }
 //    D4CGeneralBody(x, x_length, fs, f0[i], fft_size_d4c, time_axis[i],
     D4CGeneralBody(x, x_length, fs, MyMax(f0[i], world::kFloorF0),
         fft_size_d4c, time_axis[i], number_of_aperiodicities, window,

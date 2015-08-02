@@ -61,6 +61,9 @@ void GetSpectrumForEstimation(double *x, int x_length, int y_length,
     fft_complex *y_spectrum) {
   double *y = new double[fft_size];
 
+  // Initialization
+  for (int i = 0; i < fft_size; ++i) y[i] = 0.0;
+
   // Downsampling
   if (decimation_ratio != 1) {
     decimate(x, x_length, decimation_ratio, y);
@@ -571,11 +574,11 @@ void GetF0CandidateAndStabilityMap(double *boundary_f0_list,
 void DioGeneralBody(double *x, int x_length, int fs, double frame_period,
     double f0_floor, double f0_ceil, double channels_in_octave, int speed,
     double allowed_range, double *time_axis, double *f0) {
-  int number_of_bands = 2 + static_cast<int>(log(f0_ceil / f0_floor) /
+  int number_of_bands = 1 + static_cast<int>(log(f0_ceil / f0_floor) /
     world::kLog2 * channels_in_octave);
   double * boundary_f0_list = new double[number_of_bands];
   for (int i = 0; i < number_of_bands; ++i)
-    boundary_f0_list[i] = f0_floor * pow(2.0, i / channels_in_octave);
+    boundary_f0_list[i] = f0_floor * pow(2.0, (i + 1) / channels_in_octave);
 
   // normalization
   int decimation_ratio = MyMax(MyMin(speed, 12), 1);
@@ -640,7 +643,7 @@ DLLEXPORT void Dio(double *x, int x_length, int fs, const DioOption option,
 }
 
 DLLEXPORT void DioByOptPtr(double *x, int x_length, int fs, const DioOption* option,
-		 double *time_axis, double *f0) {
+    double *time_axis, double *f0) {
   Dio(x, x_length, fs, *option, time_axis, f0);
 }
 
@@ -657,5 +660,5 @@ DLLEXPORT void InitializeDioOption(DioOption *option) {
   // You can give a positive real number as the threshold.
   // The most strict value is 0, and there is no upper limit.
   // On the other hand, I think that the value from 0.02 to 0.2 is reasonable.
-  option->allowed_range = 0.02;
+  option->allowed_range = 0.1;
 }
