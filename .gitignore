@@ -55,3 +55,6 @@ tramp
 .waf-*
 .lock-*
 build
+
+### Manually added ###
+ground_truth
