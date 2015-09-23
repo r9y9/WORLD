@@ -12,6 +12,14 @@ extern "C" {
 #endif
 
 //-----------------------------------------------------------------------------
+// Struct for CheapTrick
+//-----------------------------------------------------------------------------
+typedef struct {
+  // This is defined as the struct for future update.
+  double q1;
+} CheapTrickOption;
+
+//-----------------------------------------------------------------------------
 // CheapTrick() calculates the spectrogram that consists of spectral envelopes
 // estimated by CheapTrick.
 // Input:
@@ -21,11 +29,20 @@ extern "C" {
 //   time_axis    : Time axis
 //   f0           : F0 contour
 //   f0_length    : Length of F0 contour
+//   option       : Struct to order the parameter for CheapTrick
 // Output:
 //   spectrogram  : Spectrogram estimated by CheapTrick.
 //-----------------------------------------------------------------------------
 DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
-  double *f0, int f0_length, double **spectrogram);
+  double *f0, int f0_length, CheapTrickOption *option, double **spectrogram);
+
+//-----------------------------------------------------------------------------
+// InitializeCheapTrickOption allocates the memory to the struct and sets the
+// default parameters.
+// Output:
+//   option   : Struct for the optional parameter.
+//-----------------------------------------------------------------------------
+DLLEXPORT void InitializeCheapTrickOption(CheapTrickOption *option);
 
 //-----------------------------------------------------------------------------
 // GetFFTSizeForCheapTrick() calculates the FFT size based on the sampling

@@ -18,10 +18,11 @@ namespace {
 // SmoothingWithRecovery() carries out the spectral smoothing and spectral
 // recovery on the Cepstrum domain.
 //-----------------------------------------------------------------------------
-void SmoothingWithRecovery(double current_f0, int fs, int fft_size,
+void SmoothingWithRecovery(double current_f0, int fs, int fft_size, double q1,
     ForwardRealFFT *forward_real_fft, InverseRealFFT *inverse_real_fft,
     double *spectral_envelope) {
-  const double q1 = -0.09;  // Please see the reference in CheapTrick.
+// We can control q1 as the parameter. 2015/9/22 by M. Morise
+// const double q1 = -0.09;  // Please see the reference in CheapTrick.
   double *smoothing_lifter = new double[fft_size];
   double *compensation_lifter = new double[fft_size];
 
@@ -146,8 +147,9 @@ void GetWindowedWaveform(double *x, int x_length, int fs, double current_f0,
 //   forward_fft is allocated in advance to speed up the processing.
 //-----------------------------------------------------------------------------
 void CheapTrickGeneralBody(double *x, int x_length, int fs, double current_f0,
-    int fft_size, double temporal_position, ForwardRealFFT *forward_real_fft,
-    InverseRealFFT *inverse_real_fft, double *spectral_envelope) {
+    int fft_size, double temporal_position, double q1,
+    ForwardRealFFT *forward_real_fft, InverseRealFFT *inverse_real_fft,
+    double *spectral_envelope) {
   // F0-adaptive windowing
   GetWindowedWaveform(x, x_length, fs, current_f0, temporal_position,
     forward_real_fft);
@@ -165,7 +167,7 @@ void CheapTrickGeneralBody(double *x, int x_length, int fs, double current_f0,
       fs, fft_size, forward_real_fft->waveform);
 
   // Smoothing (log axis) and spectral recovery on the cepstrum domain.
-  SmoothingWithRecovery(current_f0, fs, fft_size, forward_real_fft,
+  SmoothingWithRecovery(current_f0, fs, fft_size, q1, forward_real_fft,
       inverse_real_fft, spectral_envelope);
 }
 
@@ -177,7 +179,7 @@ DLLEXPORT int GetFFTSizeForCheapTrick(int fs) {
 }
 
 DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
-    double *f0, int f0_length, double **spectrogram) {
+    double *f0, int f0_length, CheapTrickOption *option, double **spectrogram) {
   int fft_size = GetFFTSizeForCheapTrick(fs);
   double *spectral_envelope = new double[fft_size];
 
@@ -190,7 +192,8 @@ DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
   for (int i = 0; i < f0_length; ++i) {
     current_f0 = f0[i] <= world::kFloorF0 ? world::kDefaultF0 : f0[i];
     CheapTrickGeneralBody(x, x_length, fs, current_f0, fft_size,
-        time_axis[i], &forward_real_fft, &inverse_real_fft, spectral_envelope);
+        time_axis[i], option->q1, &forward_real_fft, &inverse_real_fft,
+        spectral_envelope);
     for (int j = 0; j <= fft_size / 2; ++j)
       spectrogram[i][j] = spectral_envelope[j];
   }
@@ -198,4 +201,10 @@ DLLEXPORT void CheapTrick(double *x, int x_length, int fs, double *time_axis,
   DestroyForwardRealFFT(&forward_real_fft);
   DestroyInverseRealFFT(&inverse_real_fft);
   delete[] spectral_envelope;
+}
+
+DLLEXPORT void InitializeCheapTrickOption(CheapTrickOption *option) {
+  // q1 is the parameter used for the spectral recovery.
+  // Since The parameter is optimized, you don't need to change the parameter.
+  option->q1 = -0.09;
 }

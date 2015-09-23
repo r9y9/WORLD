@@ -257,8 +257,8 @@ void D4CGeneralBody(double *x, int x_length, int fs, double current_f0,
 }
 }  // namespace
 
-DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
-    double *f0, int f0_length, int fft_size, double **aperiodicity) {
+DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis, double *f0,
+    int f0_length, int fft_size, D4COption *option, double **aperiodicity) {
   int fft_size_d4c = static_cast<int>(pow(2.0, 1.0 +
       static_cast<int>(log(4.0 * fs / world::kFloorF0 + 1) / world::kLog2)));
 
@@ -292,7 +292,6 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
       for (int j = 0; j <= fft_size / 2; ++j) aperiodicity[i][j] = 0.0;
       continue;
     }
-//    D4CGeneralBody(x, x_length, fs, f0[i], fft_size_d4c, time_axis[i],
     D4CGeneralBody(x, x_length, fs, MyMax(f0[i], world::kFloorF0),
         fft_size_d4c, time_axis[i], number_of_aperiodicities, window,
         window_length, &forward_real_fft, &coarse_aperiodicity[1]);
@@ -310,4 +309,9 @@ DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis,
   delete[] coarse_aperiodicity;
   delete[] window;
   delete[] frequency_axis;
+}
+
+DLLEXPORT void InitializeD4COption(D4COption *option) {
+  // This struct is dummy.
+  option->dummy = 0.0;
 }
