@@ -12,6 +12,13 @@ extern "C" {
 #endif
 
 //-----------------------------------------------------------------------------
+// Struct for D4C
+//-----------------------------------------------------------------------------
+typedef struct {
+  double dummy;  // This is the future update.
+} D4COption;
+
+//-----------------------------------------------------------------------------
 // D4C() calculates the aperiodicity estimated by D4C.
 // Input:
 //   x            : Input signal
@@ -26,7 +33,15 @@ extern "C" {
 //   aperiodicity  : Aperiodicity estimated by D4C.
 //-----------------------------------------------------------------------------
 DLLEXPORT void D4C(double *x, int x_length, int fs, double *time_axis, double *f0,
-  int f0_length, int fft_size, double **aperiodicity);
+  int f0_length, int fft_size, D4COption *option, double **aperiodicity);
+
+//-----------------------------------------------------------------------------
+// InitializeD4COption allocates the memory to the struct and sets the
+// default parameters.
+// Output:
+//   option   : Struct for the optional parameter.
+//-----------------------------------------------------------------------------
+DLLEXPORT void InitializeD4COption(D4COption *option);
 
 #ifdef __cplusplus
 }

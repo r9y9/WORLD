@@ -4,6 +4,4 @@
 
 #include "./version.h"
 
-DLLEXPORT const char* GetWORLDVersion() {
-  return "0.2.1-3";
-}
+DLLEXPORT const char* GetWORLDVersion() { return "0.2.1-4"; }
