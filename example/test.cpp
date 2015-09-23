@@ -20,13 +20,14 @@
 #include <iostream>
 #include <fstream>
 
-#if (defined (__WIN32__) || defined (_WIN32)) && !defined (__MINGW32__)
+#if (defined(__WIN32__) || defined(_WIN32)) && !defined(__MINGW32__)
 #include <conio.h>
 #include <windows.h>
 #pragma comment(lib, "winmm.lib")
 #pragma warning(disable : 4996)
 #endif
-#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || defined (__MINGW32__))
+#if (defined(__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || \
+     defined(__MINGW32__))
 #include <sys/time.h>
 #include <stdint.h>
 #endif
@@ -36,12 +37,13 @@
 #include "./matlabfunctions.h"
 #include "./cheaptrick.h"
 #include "./stonemask.h"
-#include "./synthesis.h" // This is the new function.
+#include "./synthesis.h"  // This is the new function.
 
 // Frame shift [msec]
 #define FRAMEPERIOD 5.0
 
-#if (defined (__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || defined (__MINGW32__))
+#if (defined(__linux__) || defined(__CYGWIN__) || defined(__APPLE__) || \
+     defined(__MINGW32__))
 // Linux porting section: implement timeGetTime() by gettimeofday(),
 #ifndef DWORD
 #define DWORD uint32_t
@@ -69,7 +71,7 @@ bool CheckLoadedFile(double *x, int fs, int nbit, int x_length) {
 }
 
 void F0Estimation(double *x, int x_length, int fs, int f0_length, double *f0,
-    double *time_axis) {
+                  double *time_axis) {
   double *refined_f0 = new double[f0_length];
 
   DioOption option;
@@ -89,7 +91,7 @@ void F0Estimation(double *x, int x_length, int fs, int f0_length, double *f0,
   std::ofstream f0stream("f0.txt");
   f0stream.precision(16);
   for (int i = 0; i < f0_length; ++i) {
-    f0stream  << f0[i] << std::endl;
+    f0stream << f0[i] << std::endl;
   }
 
   // StoneMask is carried out to improve the estimation performance.
@@ -110,21 +112,33 @@ void F0Estimation(double *x, int x_length, int fs, int f0_length, double *f0,
 }
 
 void SpectralEnvelopeEstimation(double *x, int x_length, int fs,
-  double *time_axis, double *f0, int f0_length, double **spectrogram) {
+                                double *time_axis, double *f0, int f0_length,
+                                double **spectrogram) {
+  CheapTrickOption option;
+  InitializeCheapTrickOption(&option);  // Initialize the option
+  option.q1 = -0.15;  // This value may be better one for HMM speech synthesis.
+
   DWORD elapsed_time = timeGetTime();
-  CheapTrick(x, x_length, fs, time_axis, f0, f0_length, spectrogram);
+  CheapTrick(x, x_length, fs, time_axis, f0, f0_length, &option, spectrogram);
   printf("CheapTrick: %d [msec]\n", timeGetTime() - elapsed_time);
 }
 
 void AperiodicityEstimation(double *x, int x_length, int fs, double *time_axis,
-    double *f0, int f0_length, int fft_size, double **aperiodicity) {
+                            double *f0, int f0_length, int fft_size,
+                            double **aperiodicity) {
+  D4COption option;
+  InitializeD4COption(&option);  // Initialize the option
+
   DWORD elapsed_time = timeGetTime();
-  D4C(x, x_length, fs, time_axis, f0, f0_length, fft_size, aperiodicity);
+  // option is not implemented in this version. This is for future update.
+  // We can use "NULL" as the argument.
+  D4C(x, x_length, fs, time_axis, f0, f0_length, fft_size, &option,
+      aperiodicity);
   printf("D4C: %d [msec]\n", timeGetTime() - elapsed_time);
 }
 
 void ParameterModification(int argc, char *argv[], int fs, double *f0,
-    int f0_length, double **spectrogram) {
+                           int f0_length, double **spectrogram) {
   int fft_size = GetFFTSizeForCheapTrick(fs);
   // F0 scaling
   if (argc >= 4) {
@@ -147,14 +161,14 @@ void ParameterModification(int argc, char *argv[], int fs, double *f0,
       for (int j = 0; j <= fft_size / 2; ++j)
         spectrum1[j] = log(spectrogram[i][j]);
       interp1(freq_axis1, spectrum1, fft_size / 2 + 1, freq_axis2,
-        fft_size / 2 + 1, spectrum2);
+              fft_size / 2 + 1, spectrum2);
       for (int j = 0; j <= fft_size / 2; ++j)
         spectrogram[i][j] = exp(spectrum2[j]);
       if (ratio < 1.0) {
         for (int j = static_cast<int>(fft_size / 2.0 * ratio);
-            j <= fft_size / 2; ++j)
+             j <= fft_size / 2; ++j)
           spectrogram[i][j] =
-          spectrogram[i][static_cast<int>(fft_size / 2.0 * ratio) - 1];
+              spectrogram[i][static_cast<int>(fft_size / 2.0 * ratio) - 1];
       }
     }
     delete[] spectrum1;
@@ -165,14 +179,14 @@ void ParameterModification(int argc, char *argv[], int fs, double *f0,
 }
 
 void WaveformSynthesis(double *f0, int f0_length, double **spectrogram,
-    double **aperiodicity, int fft_size, double frame_period, int fs,
-    int y_length, double *y) {
+                       double **aperiodicity, int fft_size, double frame_period,
+                       int fs, int y_length, double *y) {
   DWORD elapsed_time;
   // Synthesis by the aperiodicity
   printf("\nSynthesis\n");
   elapsed_time = timeGetTime();
-  Synthesis(f0, f0_length, spectrogram, aperiodicity,
-      fft_size, FRAMEPERIOD, fs, y_length, y);
+  Synthesis(f0, f0_length, spectrogram, aperiodicity, fft_size, FRAMEPERIOD, fs,
+            y_length, y);
   printf("WORLD: %d [msec]\n", timeGetTime() - elapsed_time);
 }
 
@@ -225,7 +239,7 @@ int main(int argc, char *argv[]) {
 
   // Spectral envelope estimation
   SpectralEnvelopeEstimation(x, x_length, fs, time_axis, f0, f0_length,
-      spectrogram);
+                             spectrogram);
   std::ofstream spstream("spectrogram.txt");
   spstream.precision(16);
   for (int i = 0; i < f0_length; ++i) {
@@ -235,10 +249,9 @@ int main(int argc, char *argv[]) {
     spstream << std::endl;
   }
 
-
   // Aperiodicity estimation by D4C
-  AperiodicityEstimation(x, x_length, fs, time_axis, f0, f0_length,
-      fft_size, aperiodicity);
+  AperiodicityEstimation(x, x_length, fs, time_axis, f0, f0_length, fft_size,
+                         aperiodicity);
   std::ofstream apstream("aperiodicity.txt");
   apstream.precision(16);
   for (int i = 0; i < f0_length; ++i) {
@@ -253,11 +266,11 @@ int main(int argc, char *argv[]) {
 
   // The length of the output waveform
   int y_length =
-    static_cast<int>((f0_length - 1) * FRAMEPERIOD / 1000.0 * fs) + 1;
+      static_cast<int>((f0_length - 1) * FRAMEPERIOD / 1000.0 * fs) + 1;
   double *y = new double[y_length];
   // Synthesis
   WaveformSynthesis(f0, f0_length, spectrogram, aperiodicity, fft_size,
-      FRAMEPERIOD, fs, y_length, y);
+                    FRAMEPERIOD, fs, y_length, y);
   std::ofstream ystream("x_synthesized.txt");
   ystream.precision(16);
   for (int i = 0; i < y_length; ++i) {
